@@ -1,0 +1,52 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+// Paths that don't require authentication
+const publicPaths = ["/login", "/register", "/forgot-password"];
+
+export function middleware(request: NextRequest) {
+  // Get the path of the request
+  const path = request.nextUrl.pathname;
+
+  // Check if the path is public
+  const isPublicPath = publicPaths.some(
+    (publicPath) => path === publicPath || path.startsWith(`${publicPath}/`)
+  );
+
+  // Get the authentication token from the cookies
+  const token = request.cookies.get("auth_token")?.value;
+
+  // If the path requires authentication and the user is not authenticated
+  if (!isPublicPath && !token) {
+    // Create a URL for the login page
+    const loginUrl = new URL("/login", request.url);
+
+    // Add the original URL as a redirect parameter
+    loginUrl.searchParams.set("redirect", path);
+
+    // Redirect to the login page
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // If the user is authenticated and trying to access login page, redirect to dashboard
+  if (token && path === "/login") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  return NextResponse.next();
+}
+
+// Configure the middleware to run on specific paths
+export const config = {
+  // Apply this middleware to all routes except static files and api routes that handle auth
+  matcher: [
+    /*
+     * Match all paths except:
+     * 1. /api/auth routes (for authentication API)
+     * 2. /_next (Next.js internals)
+     * 3. /static (static files)
+     * 4. /favicon.ico, /robots.txt (common static files)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt).*)",
+  ],
+};
