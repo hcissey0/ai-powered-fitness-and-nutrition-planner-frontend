@@ -1,3 +1,4 @@
+'use client'
 import * as React from "react"
 import { Plus } from "lucide-react"
 
@@ -19,6 +20,8 @@ import {
 } from "@/components/ui/sidebar"
 import Calendar27 from "./calendar-27"
 import Calendar21 from "./calendar-21"
+import { useAuth } from "@/context/auth-context"
+import { User } from "@/interfaces"
 
 // This is sample data.
 const data = {
@@ -44,10 +47,11 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
   return (
     <Sidebar {...props}>
       <SidebarHeader >
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

@@ -14,7 +14,8 @@ export default function Calendar21() {
   return (
     <Calendar
       mode="single"
-      defaultMonth={range?.from}
+      
+      defaultMonth={new Date()}
       // selected={range}
       // onSelect={setRange}
       numberOfMonths={1}
@@ -34,8 +35,8 @@ export default function Calendar21() {
               {children}
               {/* show a red dot and a blue dot, to indicate workout plan and nutrition plan */}
               <div className="flex gap-1">
-              {!modifiers.workout && <span className="dot workout w-2 h-2 rounded-full bg-rose-400/40" />}
-              {!modifiers.nutrition && <span className="dot nutrition w-2 h-2 rounded-full bg-green-400/40" />}
+              {!modifiers.workout && <span className="dot workout w-2 h-2 rounded-full bg-primary/80" />}
+              {!modifiers.nutrition && <span className="dot nutrition w-2 h-2 rounded-full bg-accent/80" />}
 
               </div>
               {/* {!modifiers.outside && <span>{isWeekend ? "$220" : "$100"}</span>} */}

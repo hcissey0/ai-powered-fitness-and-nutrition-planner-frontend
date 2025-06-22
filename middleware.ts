@@ -1,8 +1,10 @@
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const AUTH_TOKEN_KEY = "fitness_auth_token"; // Key for the authentication token in cookies
 // Paths that don't require authentication
-const publicPaths = ["/login", "/register", "/forgot-password"];
+const publicPaths = ["/auth/login", "/register", "/auth/signup", "/forgot-password"];
 
 export function middleware(request: NextRequest) {
   // Get the path of the request
@@ -14,12 +16,12 @@ export function middleware(request: NextRequest) {
   );
 
   // Get the authentication token from the cookies
-  const token = request.cookies.get("auth_token")?.value;
+  const token = request.cookies.get(AUTH_TOKEN_KEY)?.value;
 
   // If the path requires authentication and the user is not authenticated
   if (!isPublicPath && !token) {
     // Create a URL for the login page
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/auth/login", request.url);
 
     // Add the original URL as a redirect parameter
     loginUrl.searchParams.set("redirect", path);
@@ -29,7 +31,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If the user is authenticated and trying to access login page, redirect to dashboard
-  if (token && path === "/login") {
+  if (token && path === "/auth/login") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

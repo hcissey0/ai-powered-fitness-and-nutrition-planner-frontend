@@ -236,6 +236,15 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+a:hover {
+  color: var(--color-primary);
+}
+
 .neon-border {
   border: 1px solid transparent;
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(255, 107, 107, 0.3)) border-box;
@@ -250,7 +259,7 @@ body {
   overflow: hidden;
   background: linear-gradient(45deg, #00d4ff, #ff6b6b);
   background-size: 200% 200%;
-  animation: gradient-shift 3s ease infinite;
+  animation: gradient-shift 3s alternate infinite;
 }
 
 .cyber-button::before {

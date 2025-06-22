@@ -45,10 +45,10 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="glass-card">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardTitle className="font-medium ">Welcome back</CardTitle>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="grid gap-6">
               <div className="grid gap-6">
                 <div className="grid gap-3">
@@ -61,6 +61,7 @@ export function LoginForm({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+
                   />
                 </div>
                 <div className="grid gap-3">
@@ -81,19 +82,20 @@ export function LoginForm({
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    autoComplete={"off"}
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full rounded-full"
-                  onClick={handleSubmit}
+                  className="cyber-button shadow-md w-full rounded-full"
+                  // onClick={handleSubmit}
                 >
                   Login
                 </Button>
               </div>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
+                <a href="/signup" className="underline underline-offset-4">
                   Sign up
                 </a>
               </div>
