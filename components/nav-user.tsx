@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  User2Icon,
 } from "lucide-react"
 
 import {
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/sidebar"
 import { User } from "@/interfaces"
 import { useAuth } from "@/context/auth-context"
+import Link from "next/link"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
@@ -116,10 +118,14 @@ export function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <Link href={'/u/profile'}>
               <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+                <User2Icon />
+                Profile
+                {/* <BadgeCheck />
+                Account */}
               </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem>
                 <CreditCard />
                 Billing
@@ -131,10 +137,8 @@ export function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => logout()}>
-
               <LogOut />
               Log out
-              
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

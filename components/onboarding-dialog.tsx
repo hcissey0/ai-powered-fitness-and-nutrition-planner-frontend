@@ -45,10 +45,10 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    age: '',
+    age: '' as unknown as number,
     image: "",
-    current_weight: '',
-    height: '',
+    current_weight: '' as unknown as number,
+    height: '' as unknown as number,
     gender: "",
     activity_level: "",
     dietary_preferences: "",
@@ -61,14 +61,37 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
 
   const handleFinish = async () => {
     setIsLoading(true);
-    if (formData.age <= 0 
-      || formData.current_weight <= 0 
-      || formData.height <= 0) {
-        toast.error("Please fill in all required fields.");
+    if (formData.age <= 0) {
+        toast.error("Please age is required.");
+        return;
+    }
+    formData.age = parseInt(formData.age as unknown as string);
+    if (formData.current_weight <= 0) {
+        toast.error("Please current weight is required.");
+        return;
+    }
+    formData.current_weight = parseInt(formData.current_weight as unknown as string);
+    if (formData.height <= 0) {
+        toast.error("Please height is required.");
+        return;
+    }
+    formData.height = parseInt(formData.height as unknown as string);
+    if (formData.gender === "") {
+        toast.error("Please select your gender");
+        return;
+    }
+    if (formData.activity_level === "") {
+        toast.error("Please select your activity level");
+        return;
+    }
+    if (formData.goal === "") {
+        toast.error("Please select your fitness goal");
         return;
     }
     try {
       const profile = await createProfile(formData as Partial<Profile>);
+      toast.success("Profile created successfully!");
+      onComplete(); // Call the onComplete callback to notify parent component
 
     } catch (error) {
       let errorMessage = "An unexpected error occurred."; // Default message
@@ -96,9 +119,8 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
       setCurrentStep(currentStep + 1);
     } else {
       handleFinish();
-      toast.success("Onboarding complete! Your profile has been created.");
+      // toast.success("Onboarding complete! Your profile has been created.");
       setIsLoading(false);
-      onComplete();
     }
   };
 
@@ -120,17 +142,14 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
 
   return (
     <Dialog open={open} >
-      <DialogContent className="sm:max-w-md max-w-[95vw] max-h-[90vh] overflow-y-auto glass border border-white/20">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-w-[95vw] h-150 sm:h-170 max-h-[90vh] overflow-y-auto glass border border-white/20">
+        <DialogHeader className="">
           <DialogTitle className="text-center text-lg sm:text-xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Welcome to FitGH!
           </DialogTitle>
           <DialogDescription className="text-center text-sm sm:text-base text-muted-foreground">
             {"Let's set up your personalized fitness journey"}
           </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 sm:space-y-6">
           <div className="space-y-2">
             <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
               <span>
@@ -140,7 +159,13 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
             </div>
             <Progress value={progress} className="h-2 bg-white/10" />
           </div>
+        </DialogHeader>
 
+        <div className="flex-1 flex flex-col space-y-4 sm:space-y-6">
+
+          <div className="flex-1">
+
+          
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
               <motion.div
@@ -282,12 +307,12 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
                   </div>
                   <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-primary/30 transition-colors">
                     <RadioGroupItem
-                      value="lightly-active"
-                      id="lightly-active"
+                      value="lightly_active"
+                      id="lightly_active"
                       className="border-white/30 text-primary"
                     />
                     <Label
-                      htmlFor="lightly-active"
+                      htmlFor="lightly_active"
                       className="flex-1 cursor-pointer"
                     >
                       <div>
@@ -302,12 +327,12 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
                   </div>
                   <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-primary/30 transition-colors">
                     <RadioGroupItem
-                      value="moderately-active"
-                      id="moderately-active"
+                      value="moderately_active"
+                      id="moderately_active"
                       className="border-white/30 text-primary"
                     />
                     <Label
-                      htmlFor="moderately-active"
+                      htmlFor="moderately_active"
                       className="flex-1 cursor-pointer"
                     >
                       <div>
@@ -322,12 +347,12 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
                   </div>
                   <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-primary/30 transition-colors">
                     <RadioGroupItem
-                      value="very-active"
-                      id="very-active"
+                      value="very_active"
+                      id="very_active"
                       className="border-white/30 text-primary"
                     />
                     <Label
-                      htmlFor="very-active"
+                      htmlFor="very_active"
                       className="flex-1 cursor-pointer"
                     >
                       <div>
@@ -468,7 +493,7 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
               </motion.div>
             )}
           </AnimatePresence>
-
+          </div>
           <div className="flex justify-between gap-2">
             <Button
               variant="outline"
