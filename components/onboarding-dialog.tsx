@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import ImageUploadAvatar from "./image-upload-avatar";
 import { Textarea } from "./ui/textarea";
-import { createProfile } from "@/api/profile";
+import { createProfile } from "@/lib/api-service";
 import { Profile } from "@/interfaces";
 import { toast } from "sonner";
 import axios from "axios";

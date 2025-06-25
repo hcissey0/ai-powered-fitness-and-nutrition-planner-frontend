@@ -40,14 +40,14 @@ export default function SignUpPage() {
 
       // Simulate a successful registration
       await signup(firstName, lastName, email, username, password);
-      console.log("Registration successful:", { firstName, lastName, email, password });
-      toast.success("Registration successful! Loggin in...");
+      toast.success("Registration successful! Logging in...");
       // Redirect or show success message here
     } catch (error) {
       let errorMessage = "An unexpected error occurred."; // Default message
 
       // Check if it's an Axios error and has a response from the server
-      if (axios.isAxiosError(error) && error.response) {
+      if (error.response) {
+        
         // Your backend sends { "error": "Your message here" }
         // So we access error.response.data.error
         // We add a fallback in case the 'error' key doesn't exist for some reason
@@ -58,7 +58,7 @@ export default function SignUpPage() {
       }
 
       toast.error("Registration failed.", {
-        description: errorMessage, // Use the extracted message
+        description: JSON.stringify(error.response.data), // Use the extracted message
       });
       // console.error("Registration failed:", error);
     } finally {
