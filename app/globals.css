@@ -196,10 +196,10 @@
 
 /* Base Styles */
 body {
-  background-color: #0a0a0f;
+  background-color: black;
   color: #ffffff;
   font-family: "Inter", sans-serif;
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+  /* background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%); */
   background-attachment: fixed;
   min-height: 100vh;
 }
@@ -247,7 +247,7 @@ a:hover {
 
 .neon-border {
   border: 1px solid transparent;
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(255, 107, 107, 0.3)) border-box;
+  /* background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(255, 107, 107, 0.3)) border-box; */
   -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: exclude;
   mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);

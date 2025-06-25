@@ -22,54 +22,107 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Settings, Activity, Save, Target } from "lucide-react";
+import {
+  User,
+  Settings,
+  Activity,
+  Save,
+  Target,
+  User2Icon,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { FuturisticCard } from "@/components/futuristic-card";
 import { AnimatedBackground } from "@/components/animated-background";
-import { getProfile } from "@/api/profile";
+import { getProfile } from "@/lib/api-service";
 import { Profile } from "@/interfaces";
 import { useAuth } from "@/context/auth-context";
 import { Textarea } from "@/components/ui/textarea";
 import ImageUploadAvatar from "@/components/image-upload-avatar";
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const [profileData, setProfileData] = useState<Partial<Profile>>(user?.profile as Profile);
-  const [first_name, setFirst_name] = useState(user?.first_name);
-  const [last_name, setLast_name] = useState(user?.last_name);
-  const [username, setUsername] = useState(user?.username);
-  const [email, setEmail] = useState(user?.email);
+
+  // Initialize with empty/default values instead of depending on user immediately
+  const [profileData, setProfileData] = useState<Partial<Profile>>({});
+  const [first_name, setFirst_name] = useState("");
+  const [last_name, setLast_name] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [onbordingOpen, setOnbordingOpen] = useState(false);
+
+  // Effect to update state when user data becomes available
+  useEffect(() => {
+    if (user) {
+      // Update user-related fields
+      setFirst_name(user.first_name || "");
+      setLast_name(user.last_name || "");
+      setUsername(user.username || "");
+      setEmail(user.email || "");
+
+      // Update profile data
+      if (user.profile) {
+        setProfileData(user.profile as Profile);
+      } else {
+        // If no profile exists, show onboarding
+        setOnbordingOpen(true);
+        setProfileData({}); // Reset to empty object
+      }
+    }
+  }, [user]); // Depend on user object
+
+  // Separate effect for onboarding logic
+  useEffect(() => {
+    if (user && !user.profile) {
+      setOnbordingOpen(true);
+    }
+  }, [user]);
 
   const updateProfileData = (field: string, value: string) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
-  useEffect(() => {
-    console.log('user', user, 'profiledata', profileData)
-  }, [])
 
   const handleSave = async () => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Your actual API call here
+      // await updateProfile({ ...profileData, first_name, last_name, username, email });
+
+      // Simulate API call for now
+      setTimeout(() => {
+        setIsLoading(false);
+        toast.success("Profile Updated", {
+          description: "Your profile has been successfully updated.",
+        });
+      }, 1000);
+    } catch (error) {
       setIsLoading(false);
-      toast.success("Profile Updated",
-        { description: "Your profile has been successfully updated." }
-      );
-    }, 1000);
+      toast.error("Error", {
+        description: "Failed to update profile. Please try again.",
+      });
+    }
   };
 
-  return (
-    <div className=" min-h-full relative">
-      <div className="particles">
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
+  // Show loading state while user data is being fetched
+  if (!user) {
+    return (
+      <div className="min-h-full relative flex items-center justify-center">
+        
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-white mt-4">Loading profile...</p>
+        </div>
       </div>
+    );
+  }
 
-      <div className=" container p relative z-10">
+  return (
+    <div className="min-h-full relative">
+   
+
+      <div className="container p relative z-10">
         {/* Profile */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-neon-green bg-clip-text text-transparent">
@@ -91,13 +144,19 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6">
               <div className="flex flex-col items-center text-center">
-                <ImageUploadAvatar defaultImage={profileData?.image}
-                onImageChange={(image) => updateProfileData('image', image as string)} />
+                <ImageUploadAvatar
+                  defaultImage={profileData?.image as string}
+                  onImageChange={(image) =>
+                    updateProfileData("image", image as string)
+                  }
+                />
                 <h3 className="text-lg sm:text-xl font-semibold text-white">
-                  {user?.first_name + " " + user?.last_name}
+                  {first_name && last_name
+                    ? `${first_name} ${last_name}`
+                    : "Complete your profile"}
                 </h3>
                 <p className="text-sm sm:text-base text-muted-foreground">
-                  {user?.email}
+                  {username || "Username"} • {email || "Email"}
                 </p>
               </div>
 
@@ -112,7 +171,7 @@ export default function ProfilePage() {
                     variant="outline"
                     className="text-xs border-primary/50 bg-primary/10 text-primary"
                   >
-                    {profileData?.current_weight} kg
+                    {profileData?.current_weight || "0"} kg
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
@@ -123,7 +182,7 @@ export default function ProfilePage() {
                     variant="outline"
                     className="text-xs border-accent/50 bg-accent/10 text-accent"
                   >
-                    {profileData?.height} cm
+                    {profileData?.height || "0"} cm
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
@@ -131,7 +190,7 @@ export default function ProfilePage() {
                     BMI
                   </span>
                   <Badge className="bg-gradient-to-r from-neon-green to-primary text-white text-xs">
-                    {profileData?.bmi}
+                    {profileData?.bmi || "0"}
                   </Badge>
                 </div>
               </div>
@@ -161,7 +220,7 @@ export default function ProfilePage() {
                       First Name
                     </Label>
                     <Input
-                      id="first_ame"
+                      id="first_name" // Fixed typo: was "first_ame"
                       value={first_name}
                       onChange={(e) => setFirst_name(e.target.value)}
                       className="h-9 sm:h-10 text-sm glass border-white/20 text-white placeholder:text-muted-foreground focus:border-primary/50"
@@ -211,7 +270,25 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
+                <div>
+                  <Button className="cyber-button w-full h-9 sm:h-10 text-white font-semibold">
+                    Save
+                  </Button>
+                </div>
+              </CardContent>
+            </FuturisticCard>
 
+            <FuturisticCard glowColor="green">
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-white">
+                  <User2Icon className="h-4 w-4 sm:h-5 sm:w-5 text-neon-green animate-pulse" />
+                  Profile Information
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+                  Update your basic profile information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 sm:space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label
@@ -223,7 +300,7 @@ export default function ProfilePage() {
                     <Input
                       id="age"
                       type="number"
-                      value={profileData?.age}
+                      value={profileData?.age || ""}
                       onChange={(e) => updateProfileData("age", e.target.value)}
                       className="h-9 sm:h-10 text-sm glass border-white/20 text-white placeholder:text-muted-foreground focus:border-primary/50"
                     />
@@ -239,7 +316,7 @@ export default function ProfilePage() {
                       id="weight"
                       type="number"
                       step="0.1"
-                      value={profileData?.current_weight}
+                      value={profileData?.current_weight || ""}
                       onChange={(e) =>
                         updateProfileData("current_weight", e.target.value)
                       }
@@ -256,7 +333,7 @@ export default function ProfilePage() {
                     <Input
                       id="height"
                       type="number"
-                      value={profileData?.height}
+                      value={profileData?.height || ""}
                       onChange={(e) =>
                         updateProfileData("height", e.target.value)
                       }
@@ -270,13 +347,13 @@ export default function ProfilePage() {
                     Gender
                   </Label>
                   <Select
-                    value={profileData?.gender}
+                    value={profileData?.gender || ""}
                     onValueChange={(value) =>
                       updateProfileData("gender", value)
                     }
                   >
                     <SelectTrigger className="h-9 sm:h-10 text-sm glass border-white/20 text-white">
-                      <SelectValue />
+                      <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent className="glass border-white/20">
                       <SelectItem value="male">Male</SelectItem>
@@ -292,7 +369,7 @@ export default function ProfilePage() {
                     </h3>
                   </div>
                   <Label>
-                    <p className="text-sm  text-muted-foreground mb-1">
+                    <p className="text-sm text-muted-foreground mb-1">
                       Please provide any dietary preferences or restrictions
                       (e.g., vegetarian, vegan, gluten-free, lactose
                       intolerant).
@@ -300,11 +377,12 @@ export default function ProfilePage() {
                     </p>
                   </Label>
                   <Textarea
-                    value={profileData?.dietary_preferences}
+                    value={profileData?.dietary_preferences || ""}
                     onChange={(e) =>
                       updateProfileData("dietary_preferences", e.target.value)
                     }
                     className="glass min-h-44"
+                    placeholder="Enter your dietary preferences..."
                   />
                   <p className="text-xs sm:text-xs text-muted-foreground mt-1">
                     This will help us tailor your meal plans to your needs.
@@ -330,13 +408,19 @@ export default function ProfilePage() {
                     Activity Level
                   </Label>
                   <RadioGroup
-                    value={profileData?.activity_level}
+                    value={profileData?.activity_level || ""}
                     onValueChange={(value) =>
                       updateProfileData("activity_level", value)
                     }
                     className="space-y-2"
                   >
-                    <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-primary/30 transition-colors">
+                    <div
+                      className={`flex items-center space-x-2 p-2 sm:p-3 rounded-lg hover:bg-accent/10 transition-colors ${
+                        profileData?.activity_level === "sedentary"
+                          ? "gradient-bg"
+                          : ""
+                      }`}
+                    >
                       <RadioGroupItem
                         value="sedentary"
                         id="sedentary-profile"
@@ -356,7 +440,13 @@ export default function ProfilePage() {
                         </div>
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-primary/30 transition-colors">
+                    <div
+                      className={`flex items-center space-x-2 p-2 sm:p-3 rounded-lg hover:bg-accent/10 transition-colors ${
+                        profileData?.activity_level === "lightly_active"
+                          ? "gradient-bg"
+                          : ""
+                      }`}
+                    >
                       <RadioGroupItem
                         value="lightly_active"
                         id="lightly-active-profile"
@@ -376,7 +466,13 @@ export default function ProfilePage() {
                         </div>
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-primary/30 transition-colors">
+                    <div
+                      className={`flex items-center space-x-2 p-2 sm:p-3 rounded-lg hover:bg-accent/10 transition-colors ${
+                        profileData?.activity_level === "moderately_active"
+                          ? "gradient-bg"
+                          : ""
+                      }`}
+                    >
                       <RadioGroupItem
                         value="moderately_active"
                         id="moderately-active-profile"
@@ -396,7 +492,13 @@ export default function ProfilePage() {
                         </div>
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-primary/30 transition-colors">
+                    <div
+                      className={`flex items-center space-x-2 p-2 sm:p-3 rounded-lg hover:bg-accent/10 transition-colors ${
+                        profileData?.activity_level === "very_active"
+                          ? "gradient-bg"
+                          : ""
+                      }`}
+                    >
                       <RadioGroupItem
                         value="very_active"
                         id="very-active-profile"
@@ -424,11 +526,15 @@ export default function ProfilePage() {
                     Fitness Goal
                   </Label>
                   <RadioGroup
-                    value={profileData?.goal}
+                    value={profileData?.goal || ""}
                     onValueChange={(value) => updateProfileData("goal", value)}
                     className="space-y-2"
                   >
-                    <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-accent/30 transition-colors">
+                    <div
+                      className={`flex items-center space-x-2 p-2 sm:p-3 rounded-lg hover:bg-accent/10 transition-colors ${
+                        profileData?.goal === "weight_loss" ? "gradient-bg" : ""
+                      }`}
+                    >
                       <RadioGroupItem
                         value="weight_loss"
                         id="lose-weight-profile"
@@ -448,7 +554,11 @@ export default function ProfilePage() {
                         </div>
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-accent/30 transition-colors">
+                    <div
+                      className={`flex items-center space-x-2 p-2 sm:p-3 rounded-lg hover:bg-accent/10 transition-colors ${
+                        profileData?.goal === "maintenance" ? "gradient-bg" : ""
+                      }`}
+                    >
                       <RadioGroupItem
                         value="maintenance"
                         id="maintain-weight-profile"
@@ -468,7 +578,11 @@ export default function ProfilePage() {
                         </div>
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2 p-2 sm:p-3 glass border border-white/10 rounded-lg hover:border-accent/30 transition-colors">
+                    <div
+                      className={`flex items-center space-x-2 p-2 sm:p-3 rounded-lg hover:bg-accent/10 transition-colors ${
+                        profileData?.goal === "muscle_gain" ? "gradient-bg" : ""
+                      }`}
+                    >
                       <RadioGroupItem
                         value="muscle_gain"
                         id="gain-muscle-profile"
@@ -494,23 +608,34 @@ export default function ProfilePage() {
             </FuturisticCard>
 
             {/* Save Button */}
-
-            <FuturisticCard glowColor="purple">
-              <CardContent className="pt-4 sm:pt-6">
                 <Button
                   onClick={handleSave}
                   disabled={isLoading}
                   className="w-full cyber-button h-9 sm:h-10 text-white font-semibold"
                   size="sm"
                 >
-                  <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                  {isLoading ?
+                  <Loader2 className={`h-3 w-3 sm:h-4 sm:w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                  : 
+                  <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-ping" />
+                }
                   {isLoading ? "Saving Changes..." : "Save Changes"}
                 </Button>
-              </CardContent>
-            </FuturisticCard>
+            
           </div>
         </div>
       </div>
+      <OnboardingDialog
+        open={onbordingOpen}
+        onComplete={() => {
+          setOnbordingOpen(false);
+          // toast.success("onboarding completed");
+        }}
+        onClose={() => {
+          setOnbordingOpen(false);
+          // toast.error("onboarding closed");
+        }}
+      />
     </div>
   );
 }

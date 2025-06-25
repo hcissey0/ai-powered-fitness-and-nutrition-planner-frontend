@@ -28,6 +28,7 @@ interface AuthContextType {
 }
 
 export const AUTH_TOKEN_KEY = "fitness_auth_token";
+export const USER_KEY = "fitness_user";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -38,17 +39,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const savedToken = localStorage.getItem(AUTH_TOKEN_KEY) || Cookies.get(AUTH_TOKEN_KEY) || null;
+    const savedUser = localStorage.getItem(USER_KEY) || Cookies.get(USER_KEY) || null;
     if (savedToken) {
       setToken(savedToken);
       setAuthToken(savedToken);
       Cookies.set(AUTH_TOKEN_KEY, savedToken, { expires: 7 }); // Set cookie with 7 days expiration
       localStorage.setItem(AUTH_TOKEN_KEY, savedToken); // Ensure localStorage is also set
-      api
-        .get<User>("/users/me/")
-        .then((res) => {console.log(res);setUser(res.data);redirect("/")})
-        // .catch(() => logout());
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+      } else {
+        api
+          .get<User>("/users/me/")
+          .then((res) => {
+            setUser(res.data);
+            localStorage.setItem(USER_KEY, JSON.stringify(res.data));
+            Cookies.set(USER_KEY, JSON.stringify(res.data), { expires: 7 }); // Set
+            redirect("/");
+          })
+          // .catch(() => logout());
+      }
     }
-    console.log(user, token, savedToken)
   }, []);
 
   const signup = async (first_name: string, last_name: string, email: string, username: string, password: string) => {
@@ -63,10 +74,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const tok = res.data.token;
       localStorage.setItem(AUTH_TOKEN_KEY, tok);
       Cookies.set(AUTH_TOKEN_KEY, tok, { expires: 7 }); // Set cookie with 7 days expiration
+      setAuthToken(tok);
       
       setToken(tok);
-      setAuthToken(tok);
       setUser(res.data.user);
+      localStorage.setItem(USER_KEY, JSON.stringify(res.data.user));
+      Cookies.set(USER_KEY, JSON.stringify(res.data.user), { expires: 7 }); //
       router.push("/");
     } catch (err) {
     
@@ -83,10 +96,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const tok = res.data.token;
       localStorage.setItem(AUTH_TOKEN_KEY, tok);
       Cookies.set(AUTH_TOKEN_KEY, tok, { expires: 7 }); // Set cookie with 7 days expiration
+      setAuthToken(tok);
       
       setToken(tok);
-      setAuthToken(tok);
       setUser(res.data.user);
+      localStorage.setItem(USER_KEY, JSON.stringify(res.data.user));
+      Cookies.set(USER_KEY, JSON.stringify(res.data.user), { expires: 7 }); //
       router.push("/");
     } catch (err) {
       throw err;
@@ -98,8 +113,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     setAuthToken(null);
     localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     Cookies.remove(AUTH_TOKEN_KEY);
-    router.push("/login");
+    Cookies.remove(USER_KEY);
+    router.push("/auth/login");
   };
 
   return (

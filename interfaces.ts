@@ -31,7 +31,7 @@ export interface Profile {
 
 export interface FitnessPlan {
   id: number;
-  profile: number; // or Profile if embedded
+  profile: Profile // or Profile if embedded
   start_date: string;
   end_date: string;
   goal_at_creation: string;
@@ -39,6 +39,8 @@ export interface FitnessPlan {
   ai_prompt_text: string;
   ai_response_raw: any;
   created_at: string;
+  workout_days: WorkoutDay[];
+  nutrition_days: NutritionDay[];
 }
 
 export interface WorkoutDay {

@@ -5,6 +5,8 @@ import {
   Bell,
   ChevronsUpDown,
   CreditCard,
+  Dumbbell,
+  LayoutDashboard,
   LogOut,
   Sparkles,
   User2Icon,
@@ -110,30 +112,38 @@ export function NavUser() {
                   }
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> */}
             <DropdownMenuGroup>
+              <Link href={'/u'}>
+              <DropdownMenuItem>
+                <LayoutDashboard />
+                Dashboard
+              </DropdownMenuItem>
+              </Link>
               <Link href={'/u/profile'}>
               <DropdownMenuItem>
                 <User2Icon />
                 Profile
-                {/* <BadgeCheck />
-                Account */}
               </DropdownMenuItem>
               </Link>
+              <Link href={'/u/plans'}>
               <DropdownMenuItem>
-                <CreditCard />
-                Billing
+                <Dumbbell />
+                Plans
               </DropdownMenuItem>
+              </Link>
+              <Link href={'/u/progress'}>
               <DropdownMenuItem>
-                <Bell />
-                Notifications
+                <BadgeCheck />
+                Progress
               </DropdownMenuItem>
+              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => logout()}>
