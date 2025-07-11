@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React from "react";
+import { handleApiError } from "@/lib/error-handler";
 import { useAuth } from "@/context/auth-context";
 import { toast } from "sonner";
 
@@ -28,16 +29,12 @@ export function LoginForm({
     try {
       if (!email || !password) {
         toast.error("Email and password are required");
-        console.error("Email and password are required");
         return;
       }
       await login(email, password);
       // Redirect or show success message
     } catch (error) {
-      toast.error("Login failed.", {
-        description: (error as Error).message,});
-      console.error("Login failed:", error);
-      // Handle login error (e.g., show error message)
+      handleApiError(error, "Login failed.");
     }
   };
 

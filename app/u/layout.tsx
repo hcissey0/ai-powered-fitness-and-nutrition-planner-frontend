@@ -1,5 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { NavUser } from "@/components/nav-user";
 import { OnboardingDialog } from "@/components/onboarding-dialog";
+import { ModeToggle } from "@/components/theme-provider";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarProvider, SidebarInset, SidebarTrigger,  } from "@/components/ui/sidebar";
@@ -13,14 +15,18 @@ export default function DashboardLayout({
 }>) {
   return (
     <SidebarProvider>
-      <AppSidebar className="glass-sidebar" />
+      {/* <AppSidebar className="glass-sidebar" /> */}
       <SidebarInset className="bg-transparent">
-        <header className="glass-header sticky top-0 flex h-16 shrink-0 items-center gap-2 px-4 z-50">
-          <SidebarTrigger className="-ml-1" />
+        <header className="glass-header sticky top-0 flex h-16 shrink-0 items-center justify-between gap-2 px-4 z-50">
+          <div className="flex gap-2 items-center">
+            <NavUser />
+          </div>
+          <div className="flex gap-2 items-center">
+{/* <SidebarTrigger className="-ml-1" />
           <Separator
             orientation="vertical"
             className="mr-2 data-[orientation=vertical]:h-4"
-          />
+          /> */}
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -28,8 +34,12 @@ export default function DashboardLayout({
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          </div>
+          
+          
+          
         </header>
-        <div className=" flex flex-1 flex-col gap-4 p-4">
+        <div className=" flex flex-1 flex-col gap-4 p-4 ">
             {children}
         </div>
         

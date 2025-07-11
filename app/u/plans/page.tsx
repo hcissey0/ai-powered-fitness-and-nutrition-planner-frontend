@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { FuturisticCard } from "@/components/futuristic-card";
+import { ProgressCalendar } from "@/components/progress-calendar";
 import {
   CardContent,
   CardDescription,
@@ -16,477 +18,353 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Utensils, Dumbbell, Clock, Users, Play, Zap } from "lucide-react";
-import Image from "next/image";
-
-import { FuturisticCard } from "@/components/futuristic-card";
-import { AnimatedBackground } from "@/components/animated-background";
+import { Utensils, Dumbbell, Clock, Play, Plus, Loader2, Calendar, Target } from "lucide-react";
+import {
+    getWorkoutTracking,
+    getMealTracking,
+    deleteWorkoutTracking,
+    deleteMealTracking,
+    createWorkoutTracking,
+    createMealTracking,
+    getDailyProgress,
+    getPlans,
+    deletePlan
+} from "@/lib/api-service";
+import { WorkoutTracking, MealTracking, FitnessPlan, DailyProgress } from "@/interfaces";
+import { GeneratePlanDialog } from "@/components/generate-plan-dialog";
 import { useEffect, useState } from "react";
-import { getPlans } from "@/lib/api-service";
 import { toast } from "sonner";
 import axios from "axios";
-import { FitnessPlan } from "@/interfaces";
+import { handleApiError } from "@/lib/error-handler";
 import { useAuth } from "@/context/auth-context";
-
-
-const nutritionPlan = [
-  {
-    meal: "Breakfast",
-    dish: "Waakye with Fish",
-    calories: 420,
-    protein: 25,
-    carbs: 45,
-    fat: 12,
-    description:
-      "Traditional rice and beans with grilled tilapia, boiled egg, and pepper sauce",
-    time: "7:00 AM",
-  },
-  {
-    meal: "Lunch",
-    dish: "Jollof Rice with Grilled Chicken",
-    calories: 580,
-    protein: 35,
-    carbs: 65,
-    fat: 18,
-    description:
-      "Spiced rice with lean grilled chicken breast and mixed vegetables",
-    time: "1:00 PM",
-  },
-  {
-    meal: "Supper",
-    dish: "Fufu with Light Soup",
-    calories: 450,
-    protein: 28,
-    carbs: 55,
-    fat: 8,
-    description: "Cassava fufu with fish and vegetable light soup",
-    time: "7:00 PM",
-  },
-];
-
-const workoutPlan = [
-  {
-    exercise: "Push-ups",
-    sets: 3,
-    reps: "10-15",
-    description: "Standard push-ups focusing on chest, shoulders, and triceps",
-    duration: "2 minutes",
-  },
-  {
-    exercise: "Squats",
-    sets: 3,
-    reps: "15-20",
-    description: "Bodyweight squats for leg and glute strength",
-    duration: "3 minutes",
-  },
-  {
-    exercise: "Plank",
-    sets: 3,
-    reps: "30-60 seconds",
-    description: "Core strengthening exercise, hold position",
-    duration: "2 minutes",
-  },
-  {
-    exercise: "Jumping Jacks",
-    sets: 3,
-    reps: "20-30",
-    description: "Cardio exercise for heart rate and coordination",
-    duration: "2 minutes",
-  },
-  {
-    exercise: "Lunges",
-    sets: 3,
-    reps: "10 each leg",
-    description: "Alternating forward lunges for leg strength and balance",
-    duration: "3 minutes",
-  },
-];
 
 export default function PlanPage() {
     const [plans, setPlans] = useState<FitnessPlan[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedPlan, setSelectedPlan] = useState<FitnessPlan | null>(null);
+    const [generatePlanOpen, setGeneratePlanOpen] = useState(false);
+    const [workoutTracking, setWorkoutTracking] = useState<WorkoutTracking[]>([]);
+    const [mealTracking, setMealTracking] = useState<MealTracking[]>([]);
+    const [dailyProgress, setDailyProgress] = useState<DailyProgress[]>([]);
 
     const { user } = useAuth();
-    useEffect(() => {
-        setLoading(true);
-        const func = async () => {
-            try {
-                const plans = await getPlans();
-                setPlans(plans);
-            } catch (error) {
-                let errorMessage = "An unexpected error occurred."; // Default message
 
-        // Check if it's an Axios error and has a response from the server
-        if (axios.isAxiosError(error) && error.response) {
-            // Your backend sends { "error": "Your message here" }
-            // So we access error.response.data.error
-            // We add a fallback in case the 'error' key doesn't exist for some reason
-            errorMessage = error.response.data.error || error.message;
-        } else if (error instanceof Error) {
-            // Handle other types of errors (e.g., network errors)
-            errorMessage = error.message;
-        }
+    const fetchAllData = async (initialLoad = false) => {
+        if (initialLoad) setLoading(true);
+        try {
+            const fetchedPlans = await getPlans();
+            setPlans(fetchedPlans);
 
-        toast.error("Loading failed.", {
-            description: errorMessage, // Use the extracted message
-        });
-        console.error("Loading failed:", error);
-        // Handle login error (e.g., show error message)
-            } finally {
-                setLoading(false);
+            if (fetchedPlans.length > 0) {
+                setSelectedPlan(prev => {
+                    const planExists = prev && fetchedPlans.some(p => p.id === prev.id);
+                    return planExists ? prev : fetchedPlans[0];
+                });
+
+                const allDates = fetchedPlans.flatMap(p => [new Date(p.start_date), new Date(p.end_date)]);
+                const minDate = new Date(Math.min(...allDates.map(date => new Date(date).getTime())));
+                const maxDate = new Date(Math.max(...allDates.map(date => new Date(date).getTime())));
+
+                const progress = await getDailyProgress({
+                    start_date: minDate.toISOString().split('T')[0],
+                    end_date: maxDate.toISOString().split('T')[0],
+                });
+                setDailyProgress(progress.progress);
+            } else {
+                setSelectedPlan(null);
+                setDailyProgress([]);
             }
-        };
-        func();
+
+            const [workoutData, mealData] = await Promise.all([
+                getWorkoutTracking(),
+                getMealTracking(),
+            ]);
+            setWorkoutTracking(workoutData);
+            setMealTracking(mealData);
+
+        } catch (error) {
+            handleApiError(error, "Data loading failed.");
+        } finally {
+            if (initialLoad) setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user) {
+            fetchAllData(true);
+        }
     }, [user]);
 
+    const handleTrackItem = async (action: 'track' | 'untrack', type: 'meal' | 'workout', itemId: number, trackingId?: number, sets?: number) => {
+        try {
+            if (action === 'untrack' && trackingId) {
+                if (type === 'meal') await deleteMealTracking(trackingId);
+                if (type === 'workout') await deleteWorkoutTracking(trackingId);
+            } else if (action === 'track') {
+                const date = new Date().toISOString().split('T')[0];
+                if (type === 'meal') await createMealTracking({ meal: itemId, date_completed: date, portion_consumed: 1 });
+                if (type === 'workout') await createWorkoutTracking({ exercise: itemId, date_completed: date, sets_completed: sets || 0 });
+            }
+            await fetchAllData(); // Refresh all data
+        } catch (error) {
+            handleApiError(error, `Failed to ${action} ${type}.`);
+        }
+    };
+
+
     if (loading) {
-    return (
-        <div className="min-h-full relative flex items-center justify-center">
-          
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-white mt-4">Loading Plans...</p>
-          </div>
-        </div>
-      );
+        return (
+            <div className="min-h-full relative flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <p className="text-white mt-4">Loading Plans...</p>
+                </div>
+            </div>
+        );
     }
 
-  return (
-    <div>
-      <div className=" min-h-full relative">
-        <div className="container mx-auto p-3 sm:p-4 lg:p-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="mb-6 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-neon-green bg-clip-text text-transparent">
-                Your Personalized Plan 🎯
-              </h1>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                AI-generated nutrition and workout plan tailored for you
-              </p>
-            </div>
-
-            <Tabs defaultValue="nutrition" className="w-full">
-              <TabsList className="glass-car grid w-full grid-cols-2 mb-4 sm:mb-6 h-9 sm:h-10 glass borde border-white/20">
-                <TabsTrigger
-                  value="nutrition"
-                  className=" flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-white data-[state=active]:glass-card dark:data-[state=active]:glass-card data-[state=active]:text-accent dark:data-[state=active]:text-accent"
-                >
-                  <Utensils className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Nutrition Plan</span>
-                  <span className="sm:hidden">Nutrition</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="workout"
-                  className=" flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-white data-[state=active]:glass-card dark:data-[state=active]:glass-card data-[state=active]:text-accent dark:data-[state=active]:text-accent"
-                >
-                  <Dumbbell className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Workout Plan</span>
-                  <span className="sm:hidden">Workout</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="nutrition">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="space-y-4 sm:space-y-6"
-                >
-                  <FuturisticCard glowColor="blue">
-                    <CardHeader className="pb-3 sm:pb-6">
-                      <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-white">
-                        <Utensils className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
-                        {"Today's Meal Plan"}
-                      </CardTitle>
-                      <CardDescription className="text-xs sm:text-sm text-muted-foreground">
-                        Carefully crafted Ghanaian meals to meet your
-                        nutritional goals
-                      </CardDescription>
-                    </CardHeader>
-                  </FuturisticCard>
-
-                  <div className="grid gap-4 sm:gap-6">
-                    {nutritionPlan.map((meal, index) => (
-                      <motion.div
-                        key={meal.meal}
+    return (
+        <div>
+            <div className="min-h-full relative">
+                <div className="containe mx-auto relative z-10">
+                    <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 * (index + 1) }}
-                      >
-                        <FuturisticCard
-                          glowColor={index % 2 === 0 ? "green" : "pink"}
-                        >
-                          <CardHeader className="pb-3 sm:pb-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-                              <div className="flex items-center gap-2 sm:gap-3">
-                                <Badge
-                                  variant="outline"
-                                  className="text-primary border-primary text-xs bg-primary/10"
+                        transition={{ duration: 0.5 }}
+                    >
+                        <div className="mb-6 sm:mb-8">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                                <div>
+                                    <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-neon-green bg-clip-text text-transparent">
+                                        Your Personalized Plan 🎯
+                                    </h1>
+                                    <p className="text-sm sm:text-base text-muted-foreground">
+                                        AI-generated nutrition and workout plan tailored for you
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={() => setGeneratePlanOpen(true)}
+                                    disabled={!user?.profile}
+                                    className="cyber-button h-10 sm:h-11 text-white font-semibold"
                                 >
-                                  {meal.meal}
-                                </Badge>
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                                  <span className="text-xs sm:text-sm">
-                                    {meal.time}
-                                  </span>
-                                </div>
-                              </div>
-                              <Badge className="bg-gradient-to-r from-accent to-neon-pink text-white text-xs w-fit">
-                                {meal.calories} cal
-                              </Badge>
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Generate New Plan
+                                </Button>
                             </div>
-                            <CardTitle className="text-lg sm:text-xl text-white">
-                              {meal.dish}
-                            </CardTitle>
-                            <CardDescription className="text-xs sm:text-sm text-muted-foreground">
-                              {meal.description}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                              <div className="flex-shrink-0">
-                                <Image
-                                  src="/placeholder.svg?height=120&width=200"
-                                  alt={meal.dish}
-                                  width={200}
-                                  height={120}
-                                  className="rounded-lg object-cover w-full lg:w-48 h-32 lg:h-24 border border-white/10"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                                  <div className="text-center">
-                                    <p className="text-xs sm:text-sm text-muted-foreground">
-                                      Protein
-                                    </p>
-                                    <p className="text-base sm:text-lg font-bold text-primary text-glow">
-                                      {meal.protein}g
-                                    </p>
-                                  </div>
-                                  <div className="text-center">
-                                    <p className="text-xs sm:text-sm text-muted-foreground">
-                                      Carbs
-                                    </p>
-                                    <p className="text-base sm:text-lg font-bold text-accent text-glow">
-                                      {meal.carbs}g
-                                    </p>
-                                  </div>
-                                  <div className="text-center">
-                                    <p className="text-xs sm:text-sm text-muted-foreground">
-                                      Fat
-                                    </p>
-                                    <p className="text-base sm:text-lg font-bold text-neon-green text-glow">
-                                      {meal.fat}g
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </FuturisticCard>
-                      </motion.div>
-                    ))}
-                  </div>
 
-                  {/* Daily Summary */}
-                  <FuturisticCard glowColor="purple">
-                    <CardHeader className="pb-3 sm:pb-6">
-                      <CardTitle className="text-lg sm:text-xl text-white">
-                        Daily Nutrition Summary
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <div className="text-center">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            Total Calories
-                          </p>
-                          <p className="text-xl sm:text-2xl font-bold text-primary text-glow">
-                            1,450
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            Protein
-                          </p>
-                          <p className="text-xl sm:text-2xl font-bold text-primary text-glow">
-                            88g
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            Carbs
-                          </p>
-                          <p className="text-xl sm:text-2xl font-bold text-accent text-glow">
-                            165g
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            Fat
-                          </p>
-                          <p className="text-xl sm:text-2xl font-bold text-neon-green text-glow">
-                            38g
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </FuturisticCard>
-                </motion.div>
-              </TabsContent>
+                            <ProgressCalendar className="mb-6" initialProgress={dailyProgress} />
 
-              <TabsContent value="workout">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="space-y-4 sm:space-y-6"
-                >
-                  <FuturisticCard glowColor="pink">
-                    <CardHeader className="pb-3 sm:pb-6">
-                      <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-white">
-                        <Dumbbell className="h-4 w-4 sm:h-5 sm:w-5 text-accent animate-pulse" />
-                        {"Today's Workout"}
-                      </CardTitle>
-                      <CardDescription className="text-xs sm:text-sm text-muted-foreground">
-                        Beginner-friendly exercises you can do at home
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-                          <span className="text-xs sm:text-sm text-white">
-                            Total Time: 15-20 minutes
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-                          <span className="text-xs sm:text-sm text-white">
-                            Beginner Level
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </FuturisticCard>
+                            {selectedPlan && (
+                                <Button
+                                    onClick={async () => {
+                                        try {
+                                            await deletePlan(selectedPlan.id);
+                                            toast.success("Plan deleted.");
+                                            await fetchAllData(true);
+                                        } catch (error) {
+                                            handleApiError(error, "Failed to delete plan.");
+                                        }
+                                    }}
+                                    variant="destructive"
+                                    className="mb-4"
+                                >
+                                    Delete Selected Plan
+                                </Button>
+                            )}
+                            {plans.length > 0 && (
+                                <div className="mb-4">
+                                    <label className="text-sm font-medium text-white mb-2 block">
+                                        Select Plan ({plans.length} available):
+                                    </label>
+                                    <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
+                                        {plans.map((plan) => (
+                                            <button
+                                                key={plan.id}
+                                                onClick={() => setSelectedPlan(plan)}
+                                                className={`flex-shrink-0 p-3 rounded-lg border text-sm transition-all ${selectedPlan?.id === plan.id
+                                                        ? "border-primary bg-primary/20 text-primary"
+                                                        : "border-white/20 bg-white/5 text-white hover:border-primary/50"
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="h-4 w-4" />
+                                                    <span>
+                                                        {new Date(plan.start_date).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1 mt-1">
+                                                    <Target className="h-3 w-3" />
+                                                    <span className="text-xs capitalize">
+                                                        {plan.goal_at_creation?.replace('_', ' ') || 'General'}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
-                  <FuturisticCard glowColor="green">
-                    <CardHeader className="pb-3 sm:pb-6">
-                      <CardTitle className="text-lg sm:text-xl text-white">
-                        Exercise List
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Accordion type="single" collapsible className="w-full">
-                        {workoutPlan.map((exercise, index) => (
-                          <AccordionItem
-                            key={exercise.exercise}
-                            value={`exercise-${index}`}
-                            className="border-white/10"
-                          >
-                            <AccordionTrigger className="hover:no-underline text-left text-white hover:text-primary">
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full mr-4 gap-2">
-                                <div className="flex items-center gap-2 sm:gap-3">
-                                  <Badge
-                                    variant="outline"
-                                    className="text-accent border-accent text-xs bg-accent/10"
-                                  >
-                                    {index + 1}
-                                  </Badge>
-                                  <span className="font-medium text-sm sm:text-base">
-                                    {exercise.exercise}
-                                  </span>
+                            {plans.length === 0 && (
+                                <div className="text-center py-8 border border-dashed border-white/20 rounded-lg mb-6">
+                                    <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                    <h3 className="text-lg font-semibold text-white mb-2">
+                                        No Plans Yet
+                                    </h3>
+                                    <p className="text-muted-foreground mb-4">
+                                        Generate your first AI-powered fitness and nutrition plan to get started.
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                                  <span>{exercise.sets} sets</span>
-                                  <span>•</span>
-                                  <span>{exercise.reps} reps</span>
-                                </div>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="pt-4 space-y-3 sm:space-y-4">
-                                <p className="text-xs sm:text-sm text-muted-foreground">
-                                  {exercise.description}
-                                </p>
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-                                  <div className="flex items-center gap-1 sm:gap-2">
-                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-                                    <span className="text-xs sm:text-sm text-white">
-                                      {exercise.duration}
-                                    </span>
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm glass border-white/20 text-white hover:bg-white/10"
-                                  >
-                                    <Play className="h-3 w-3 sm:h-4 sm:w-4" />
-                                    Watch Demo
-                                  </Button>
-                                </div>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </CardContent>
-                  </FuturisticCard>
+                            )}
+                        </div>
 
-                  {/* Workout Tips */}
-                  <FuturisticCard glowColor="yellow">
-                    <CardHeader className="pb-3 sm:pb-6">
-                      <CardTitle className="text-lg sm:text-xl text-white flex items-center gap-2">
-                        <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-neon-yellow animate-pulse" />
-                        Workout Tips
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2 text-xs sm:text-sm">
-                        <li className="flex items-start gap-2">
-                          <span className="text-accent">•</span>
-                          <span className="text-white">
-                            Warm up for 2-3 minutes before starting
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-accent">•</span>
-                          <span className="text-white">
-                            Rest 30-60 seconds between sets
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-accent">•</span>
-                          <span className="text-white">
-                            Focus on proper form over speed
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-accent">•</span>
-                          <span className="text-white">
-                            Stay hydrated throughout your workout
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-accent">•</span>
-                          <span className="text-white">
-                            Cool down with light stretching
-                          </span>
-                        </li>
-                      </ul>
-                    </CardContent>
-                  </FuturisticCard>
-                </motion.div>
-              </TabsContent>
-            </Tabs>
-          </motion.div>
+                        {selectedPlan &&
+                            <Tabs defaultValue="nutrition" className="w-full">
+                                <TabsList className="glass-car grid w-full grid-cols-2 mb-4 sm:mb-6 h-9 sm:h-10 glass borde border-white/20">
+                                    <TabsTrigger value="nutrition" className=" flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-white data-[state=active]:glass-card dark:data-[state=active]:glass-card data-[state=active]:text-accent dark:data-[state=active]:text-accent">
+                                        <Utensils className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="hidden sm:inline">Nutrition Plan</span>
+                                        <span className="sm:hidden">Nutrition</span>
+                                    </TabsTrigger>
+                                    <TabsTrigger value="workout" className=" flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-white data-[state=active]:glass-card dark:data-[state=active]:glass-card data-[state=active]:text-accent dark:data-[state=active]:text-accent">
+                                        <Dumbbell className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="hidden sm:inline">Workout Plan</span>
+                                        <span className="sm:hidden">Workout</span>
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="nutrition">
+                                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-4 sm:space-y-6">
+                                        {selectedPlan.nutrition_days.map((nutritionDay, dayIndex) => {
+                                            const dayDate = new Date(selectedPlan.start_date);
+                                            dayDate.setDate(dayDate.getDate() + nutritionDay.day_of_week - 1);
+
+                                            const dayName = dayDate.toLocaleDateString('en-US', { dateStyle: 'full' });
+
+                                            const dailyTotals = nutritionDay.meals.reduce((acc, meal) => {
+                                                acc.calories += meal.calories;
+                                                acc.protein += meal.protein_grams;
+                                                acc.carbs += meal.carbs_grams;
+                                                acc.fats += meal.fats_grams;
+                                                return acc;
+                                            }, { calories: 0, protein: 0, carbs: 0, fats: 0 });
+
+                                            return (
+                                                <FuturisticCard key={nutritionDay.id} glowColor={dayIndex % 2 === 0 ? "green" : "pink"}>
+                                                    <CardHeader>
+                                                        <CardTitle className="flex justify-between items-center">
+                                                            <span>Day {nutritionDay.day_of_week} ({dayName})</span>
+                                                            <Badge variant="outline" className="text-sm">
+                                                                {dailyTotals.calories.toFixed(0)} kcal
+                                                            </Badge>
+                                                        </CardTitle>
+                                                        <CardDescription className="flex justify-between text-xs">
+                                                            <span>Protein: {dailyTotals.protein.toFixed(0)}g</span>
+                                                            <span>Carbs: {dailyTotals.carbs.toFixed(0)}g</span>
+                                                            <span>Fats: {dailyTotals.fats.toFixed(0)}g</span>
+                                                        </CardDescription>
+                                                    </CardHeader>
+                                                    <CardContent>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                            {nutritionDay.meals.map((meal) => {
+                                                                const trackedItem = mealTracking.find(t => t.meal === meal.id && new Date(t.date_completed).toDateString() === new Date().toDateString());
+                                                                const isTracked = !!trackedItem;
+                                                                return (
+                                                                    <div key={meal.id} className="border border-white/10 rounded-lg p-4 flex flex-col justify-between">
+                                                                        <div>
+                                                                            <div className="flex justify-between items-start mb-2">
+                                                                                <h4 className="text-base font-semibold text-white">{meal.description}</h4>
+                                                                                <Badge variant="outline" className="text-primary border-primary text-xs bg-primary/10 capitalize">{meal.meal_type}</Badge>
+                                                                            </div>
+                                                                            <div className="text-xs text-muted-foreground space-y-1">
+                                                                                <p>Calories: {meal.calories.toFixed(0)}</p>
+                                                                                <p>Protein: {meal.protein_grams.toFixed(0)}g</p>
+                                                                                <p>Carbs: {meal.carbs_grams.toFixed(0)}g</p>
+                                                                                <p>Fats: {meal.fats_grams.toFixed(0)}g</p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <Button
+                                                                            variant={isTracked ? "secondary" : "default"}
+                                                                            size="sm"
+                                                                            className={`w-full mt-4 flex items-center gap-1 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm ${isTracked ? 'bg-green-500/20 text-green-400' : ''}`}
+                                                                            onClick={() => handleTrackItem(isTracked ? 'untrack' : 'track', 'meal', meal.id, trackedItem?.id)}
+                                                                        >
+                                                                            {isTracked ? 'Undo' : 'Done'}
+                                                                        </Button>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </CardContent>
+                                                </FuturisticCard>
+                                            );
+                                        })}
+                                    </motion.div>
+                                </TabsContent>
+
+                                <TabsContent value="workout">
+                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-4 sm:space-y-6">
+                                        {selectedPlan.workout_days.map((workoutDay, dayIndex) => {
+                                            const dayDate = new Date(selectedPlan.start_date);
+                                            dayDate.setDate(dayDate.getDate() + workoutDay.day_of_week - 1);
+                                            const dayName = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
+
+                                            return (
+                                                <FuturisticCard key={workoutDay.id} glowColor={dayIndex % 2 === 0 ? "green" : "yellow"}>
+                                                    <CardHeader>
+                                                        <CardTitle>{dayName}: {workoutDay.title}</CardTitle>
+                                                        {workoutDay.is_rest_day && <Badge>Rest Day</Badge>}
+                                                    </CardHeader>
+                                                    {!workoutDay.is_rest_day && workoutDay.exercises.length > 0 && (
+                                                        <CardContent>
+                                                            <Accordion type="single" collapsible className="w-full">
+                                                                {workoutDay.exercises.map((exercise) => {
+                                                                    const trackedItem = workoutTracking.find(t => t.exercise === exercise.id && new Date(t.date_completed).toDateString() === new Date().toDateString());
+                                                                    const isTracked = !!trackedItem;
+                                                                    return (
+                                                                        <AccordionItem key={exercise.id} value={`exercise-${exercise.id}`}>
+                                                                            <AccordionTrigger>{exercise.name}</AccordionTrigger>
+                                                                            <AccordionContent>
+                                                                                <div className="pt-4 space-y-3 sm:space-y-4">
+                                                                                    <p className="text-xs sm:text-sm text-muted-foreground">{exercise.notes}</p>
+                                                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                                                                                        <div className="flex items-center gap-1 sm:gap-2">
+                                                                                            <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                                                                                            <span className="text-xs sm:text-sm text-white">Rest: {exercise.rest_period_seconds}s</span>
+                                                                                        </div>
+                                                                                        <Button
+                                                                                            variant={isTracked ? "secondary" : "default"}
+                                                                                            size="sm"
+                                                                                            className={`flex items-center gap-1 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm ${isTracked ? 'bg-green-500/20 text-green-400' : ''}`}
+                                                                                            onClick={() => handleTrackItem(isTracked ? 'untrack' : 'track', 'workout', exercise.id, trackedItem?.id, exercise.sets)}
+                                                                                        >
+                                                                                            {isTracked ? 'Undo' : 'Done'}
+                                                                                        </Button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </AccordionContent>
+                                                                        </AccordionItem>
+                                                                    );
+                                                                })}
+                                                            </Accordion>
+                                                        </CardContent>
+                                                    )}
+                                                </FuturisticCard>
+                                            );
+                                        })}
+                                    </motion.div>
+                                </TabsContent>
+                            </Tabs>
+                        }
+                    </motion.div>
+                </div>
+            </div>
+            <GeneratePlanDialog
+                open={generatePlanOpen}
+                onClose={() => setGeneratePlanOpen(false)}
+                onPlanGenerated={() => {
+                    fetchAllData(true);
+                }}
+            />
         </div>
-      </div>
-    </div>
-  );
+    );
 }

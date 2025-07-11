@@ -22,6 +22,7 @@ import Calendar27 from "./calendar-27"
 import Calendar21 from "./calendar-21"
 import { useAuth } from "@/context/auth-context"
 import { User } from "@/interfaces"
+import { ProgressCalendar } from "./progress-calendar"
 
 // This is sample data.
 const data = {
@@ -56,7 +57,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <Calendar21 />
+            {/* <Calendar21 /> */}
+            {/* <ProgressCalendar /> */}
           </SidebarGroupContent>
         </SidebarGroup>
         {/* <div className="borde">
@@ -64,6 +66,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <DatePicker />
         </div> */}
         <SidebarSeparator className="mx-0" />
+        {/* <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="/u">
+                <Calendar27 />
+                <span>Dashboard</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="/u/progress">
+                <Calendar27 />
+                <span>Progress</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu> */}
         <Calendars calendars={data.calendars} />
       </SidebarContent>
       <SidebarFooter>

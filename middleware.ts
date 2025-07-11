@@ -17,6 +17,7 @@ export function middleware(request: NextRequest) {
 
   // Get the authentication token from the cookies
   const token = request.cookies.get(AUTH_TOKEN_KEY)?.value;
+  console.log(token)
 
   // If the path requires authentication and the user is not authenticated
   if (!isPublicPath && !token) {
@@ -31,7 +32,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If the user is authenticated and trying to access login page, redirect to dashboard
-  if (token && path === "/auth/login") {
+  if (token && publicPaths.includes(path)) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

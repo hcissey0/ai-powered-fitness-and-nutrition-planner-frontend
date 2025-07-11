@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AnimatedBackground } from "@/components/animated-background";
 import { AuthProvider } from "@/context/auth-context";
 import { Toaster } from "sonner";
+import { ApiStatus } from "@/components/api-status";
+
 
 
 const spaceMono = localFont({
@@ -35,11 +37,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${spaceMono.className} ${spaceMono.variable} antialiased`}
       >
+        <ApiStatus />
         <AnimatedBackground />
         <AuthProvider>
 

@@ -82,7 +82,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       Cookies.set(USER_KEY, JSON.stringify(res.data.user), { expires: 7 }); //
       router.push("/");
     } catch (err) {
-    
       throw err;
     }
   }

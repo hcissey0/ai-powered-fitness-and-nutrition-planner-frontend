@@ -62,12 +62,12 @@ export function NavUser() {
                     user.username.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              {/* <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
                   {user?.first_name + " " + user?.last_name}
                 </span>
                 <span className="truncate text-xs">{user?.email}</span>
-              </div>
+              </div> */}
               {/* <ChevronsUpDown className="ml-auto size-4" /> */}
             </SidebarMenuButton>
                   :

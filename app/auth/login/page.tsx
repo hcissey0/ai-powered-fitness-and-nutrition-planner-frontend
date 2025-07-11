@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/error-handler";
 import { useAuth } from "@/context/auth-context";
 import React from "react";
-import axios from "axios";
 
 export default function LoginPage() {
   const [email, setEmail] = React.useState("");
@@ -21,30 +21,12 @@ export default function LoginPage() {
     try {
       if (!email || !password) {
         toast.error("Email and password are required");
-        console.error("Email and password are required");
         return;
       }
       await login(email, password);
       // Redirect or show success message
     } catch (error) {
-      let errorMessage = "An unexpected error occurred."; // Default message
-
-      // Check if it's an Axios error and has a response from the server
-      if (axios.isAxiosError(error) && error.response) {
-        // Your backend sends { "error": "Your message here" }
-        // So we access error.response.data.error
-        // We add a fallback in case the 'error' key doesn't exist for some reason
-        errorMessage = error.response.data.error || error.message;
-      } else if (error instanceof Error) {
-        // Handle other types of errors (e.g., network errors)
-        errorMessage = error.message;
-      }
-
-      toast.error("Login failed.", {
-        description: errorMessage, // Use the extracted message
-      });
-      console.error("Login failed:", error);
-      // Handle login error (e.g., show error message)
+      handleApiError(error, "Login failed.");
     } finally {
       setIsLoading(false);
     }

@@ -86,3 +86,33 @@ export interface Meal {
   fats_grams: number;
   portion_size: string;
 }
+
+export interface WorkoutTracking {
+  id: number;
+  exercise: number;
+  exercise_name: string;
+  exercise_sets: number;
+  date_completed: string;
+  sets_completed: number;
+  notes: string;
+  created_at: string;
+}
+
+export interface MealTracking {
+  id: number;
+  meal: number;
+  meal_description: string;
+  meal_type: string;
+  date_completed: string;
+  portion_consumed: number;
+  notes: string;
+  created_at: string;
+}
+
+export interface DailyProgress {
+  date: string;
+  day_of_week: number;
+  workout_progress: number;
+  nutrition_progress: number;
+  is_rest_day: boolean;
+}

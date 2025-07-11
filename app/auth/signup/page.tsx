@@ -5,10 +5,10 @@ import { LoginForm } from "@/components/login-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { handleApiError } from "@/lib/error-handler";
+import { useAuth } from "@/context/auth-context";
 import React from "react";
 import { toast } from "sonner";
-import { useAuth } from "@/context/auth-context";
-import axios from "axios";
 
 export default function SignUpPage() {
 
@@ -43,24 +43,7 @@ export default function SignUpPage() {
       toast.success("Registration successful! Logging in...");
       // Redirect or show success message here
     } catch (error) {
-      let errorMessage = "An unexpected error occurred."; // Default message
-
-      // Check if it's an Axios error and has a response from the server
-      if (error.response) {
-        
-        // Your backend sends { "error": "Your message here" }
-        // So we access error.response.data.error
-        // We add a fallback in case the 'error' key doesn't exist for some reason
-        errorMessage = error.response.data.error || error.message;
-      } else if (error instanceof Error) {
-        // Handle other types of errors (e.g., network errors)
-        errorMessage = error.message;
-      }
-
-      toast.error("Registration failed.", {
-        description: JSON.stringify(error.response.data), // Use the extracted message
-      });
-      // console.error("Registration failed:", error);
+      handleApiError(error, "Registration failed.");
     } finally {
       setIsLoading(false);
     }
