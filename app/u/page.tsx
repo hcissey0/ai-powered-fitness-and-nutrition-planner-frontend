@@ -21,10 +21,15 @@ import {
 import React from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
+import { ChartRadialText } from "@/components/chart-radial-text";
+import CalorieTrackingRadial from "@/components/calorie-tracking-radial";
+import WeeklyWorkoutCompletion from "@/components/weekly-workout-completion";
+import { ProgressCalendar } from "@/components/progress-calendar";
+import MacronutrientBreakdown from "@/components/macro-nutrient-breakdown";
 
 export default function Page() {
   const { user } = useAuth();
-  const [plans, setPlans] = React.useState<FitnessPlan[]>([]);
+  // const [plans, setPlans] = React.useState<FitnessPlan[]>([]);
   const [onboardingOpen, setOnboardingOpen] = React.useState(false);
   const [generatePlanOpen, setGeneratePlanOpen] = React.useState(false);
 
@@ -34,54 +39,65 @@ export default function Page() {
     }
   }, [user]);
 
-  const fetchPlans = async () => {
-    try {
-      const fetchedPlans = await getPlans();
-      setPlans(fetchedPlans);
-    } catch (error) {
-      console.error("Failed to fetch plans", error);
-    }
-  };
+  // const fetchPlans = async () => {
+  //   try {
+  //     const fetchedPlans = await getPlans();
+  //     setPlans(fetchedPlans);
+  //   } catch (error) {
+  //     console.error("Failed to fetch plans", error);
+  //   }
+  // };
 
-  React.useEffect(() => {
-    fetchPlans();
-  }, []);
+  // React.useEffect(() => {
+  //   fetchPlans();
+  // }, []);
 
-  const handleDeletePlan = async (planId: number) => {
-    try {
-      await deletePlan(planId);
-      setPlans(plans.filter((plan) => plan.id !== planId));
-      toast.success("Plan deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete plan");
-    }
-  };
+  // const handleDeletePlan = async (planId: number) => {
+  //   try {
+  //     await deletePlan(planId);
+  //     setPlans(plans.filter((plan) => plan.id !== planId));
+  //     toast.success("Plan deleted successfully");
+  //   } catch (error) {
+  //     toast.error("Failed to delete plan");
+  //   }
+  // };
 
-  const handleTrackWorkout = async (exerciseId: number) => {
-    try {
-      await createWorkoutTracking({
-        exercise: exerciseId,
-        date_completed: new Date().toISOString().split("T")[0],
-        sets_completed: 1, // Or some other logic
-      });
-      toast.success("Workout tracked successfully");
-    } catch (error) {
-      toast.error("Failed to track workout");
-    }
-  };
+  // const handleTrackWorkout = async (exerciseId: number) => {
+  //   try {
+  //     await createWorkoutTracking({
+  //       exercise: exerciseId,
+  //       date_completed: new Date().toISOString().split("T")[0],
+  //       sets_completed: 1, // Or some other logic
+  //     });
+  //     toast.success("Workout tracked successfully");
+  //   } catch (error) {
+  //     toast.error("Failed to track workout");
+  //   }
+  // };
 
-  const handleTrackMeal = async (mealId: number) => {
-    try {
-      await createMealTracking({
-        meal: mealId,
-        date_completed: new Date().toISOString().split("T")[0],
-        portion_consumed: 1, // Or some other logic
-      });
-      toast.success("Meal tracked successfully");
-    } catch (error) {
-      toast.error("Failed to track meal");
-    }
-  };
+  // const handleTrackMeal = async (mealId: number) => {
+  //   try {
+  //     await createMealTracking({
+  //       meal: mealId,
+  //       date_completed: new Date().toISOString().split("T")[0],
+  //       portion_consumed: 1, // Or some other logic
+  //     });
+  //     toast.success("Meal tracked successfully");
+  //   } catch (error) {
+  //     toast.error("Failed to track meal");
+  //   }
+  // };
+
+  if (!user) {
+    return (
+      <div className="min-h-full relative flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-white mt-4">Loading Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -92,79 +108,11 @@ export default function Page() {
           Generate New Plan
         </Button>
       </div>
-      <div className="space-y-4">
-        {plans.map((plan) => (
-          <Card key={plan.id}>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>
-                Plan: {plan.start_date} to {plan.end_date}
-              </CardTitle>
-              <Button
-                onClick={() => handleDeletePlan(plan.id)}
-                variant="destructive"
-              >
-                Delete Plan
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                {plan.workout_days.map((day: WorkoutDay) => (
-                  <AccordionItem value={`workout-${day.id}`} key={day.id}>
-                    <AccordionTrigger>{day.title}</AccordionTrigger>
-                    <AccordionContent>
-                      {day.is_rest_day ? (
-                        <p>Rest day</p>
-                      ) : (
-                        <ul>
-                          {day.exercises.map((exercise) => (
-                            <li
-                              key={exercise.id}
-                              className="flex justify-between items-center"
-                            >
-                              <span>
-                                {exercise.name} - {exercise.sets} sets of{" "}
-                                {exercise.reps}
-                              </span>
-                              <Button
-                                onClick={() => handleTrackWorkout(exercise.id)}
-                              >
-                                Track
-                              </Button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-                {plan.nutrition_days.map((day) => (
-                  <AccordionItem value={`nutrition-${day.id}`} key={day.id}>
-                    <AccordionTrigger>
-                      Nutrition - Day {day.day_of_week}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul>
-                        {day.meals.map((meal: Meal) => (
-                          <li
-                            key={meal.id}
-                            className="flex justify-between items-center"
-                          >
-                            <span>
-                              {meal.meal_type}: {meal.description}
-                            </span>
-                            <Button onClick={() => handleTrackMeal(meal.id)}>
-                              Track
-                            </Button>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+        <ProgressCalendar className="sm:col-span-3 md:col-span-4"/>
+        <CalorieTrackingRadial className="sm:col-span-2 " />
+        <MacronutrientBreakdown className="sm:col-span-2 " />
+        <WeeklyWorkoutCompletion className="sm:col-span-2 md:col-span-4 lg:col-span-4" />
       </div>
       <OnboardingDialog
         open={onboardingOpen}

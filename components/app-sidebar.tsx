@@ -1,10 +1,28 @@
-'use client'
-import * as React from "react"
-import { Plus } from "lucide-react"
+"use client";
+import * as React from "react";
+import {
+  Bell,
+  ChartLine,
+  Check,
+  Globe,
+  Home,
+  Keyboard,
+  LayoutDashboard,
+  Link,
+  Lock,
+  Menu,
+  MessageCircle,
+  Paintbrush,
+  PencilRulerIcon,
+  Plus,
+  Settings,
+  User2,
+  Video,
+} from "lucide-react";
 
-import { Calendars } from "@/components/calendars"
-import { DatePicker } from "@/components/date-picker"
-import { NavUser } from "@/components/nav-user"
+import { Calendars } from "@/components/calendars";
+import { DatePicker } from "@/components/date-picker";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -17,12 +35,13 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
-} from "@/components/ui/sidebar"
-import Calendar27 from "./calendar-27"
-import Calendar21 from "./calendar-21"
-import { useAuth } from "@/context/auth-context"
-import { User } from "@/interfaces"
-import { ProgressCalendar } from "./progress-calendar"
+} from "@/components/ui/sidebar";
+import Calendar27 from "./calendar-27";
+import Calendar21 from "./calendar-21";
+import { useAuth } from "@/context/auth-context";
+import { User } from "@/interfaces";
+import { ProgressCalendar } from "./progress-calendar";
+import { usePathname } from "next/navigation";
 
 // This is sample data.
 const data = {
@@ -45,27 +64,54 @@ const data = {
       items: ["Travel", "Reminders", "Deadlines"],
     },
   ],
-}
+  nav: [
+    { name: "Dashboard", icon: LayoutDashboard, url: "/u" },
+    { name: "Plans", icon: PencilRulerIcon, url: "/u/plans" },
+    { name: "Profile", icon: User2, url: "/u/profile" },
+    { name: "Progress", icon: ChartLine, url: "/u/progress" },
+  ],
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
+  const pathname = usePathname();
   return (
     <Sidebar {...props}>
-      <SidebarHeader >
+      <SidebarHeader>
         <NavUser />
       </SidebarHeader>
       <SidebarContent>
+        <SidebarSeparator className="mx-0" />
         <SidebarGroup>
           <SidebarGroupContent>
-            {/* <Calendar21 /> */}
-            {/* <ProgressCalendar /> */}
+            <SidebarMenu>
+              {data.nav.map((item) => (
+                <SidebarMenuItem key={item.name}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.endsWith(item.url)}
+                  >
+                    <a href={item.url}>
+                      <item.icon />
+                      <span>{item.name}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {/* <SidebarGroup>
+          <SidebarGroupContent>
+          <Calendar21 />
+          <ProgressCalendar />
+          </SidebarGroupContent>
+          </SidebarGroup> */}
         {/* <div className="borde">
 
-        <DatePicker />
-        </div> */}
-        <SidebarSeparator className="mx-0" />
+<DatePicker />
+</div> */}
+        {/* <SidebarSeparator className="mx-0" /> */}
         {/* <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
@@ -84,19 +130,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu> */}
-        <Calendars calendars={data.calendars} />
+        {/* <Calendars calendars={data.calendars} /> */}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton>
               <Plus />
-              <span>New Calendar</span>
+              <span>New Plan</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

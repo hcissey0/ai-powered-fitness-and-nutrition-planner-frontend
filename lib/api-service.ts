@@ -40,7 +40,6 @@ export const getPlans = async (): Promise<FitnessPlan[]> => {
 
 export const generatePlan = async (dateRange: {
   start_date: string;
-  end_date: string;
 }): Promise<{
   message: string;
   plan: FitnessPlan;
@@ -111,5 +110,5 @@ export const getDailyProgress = async (
 };
 
 export const deletePlan = async (planId: number): Promise<void> => {
-  await api.delete(`/users/${planId}/me/plans/`);
+  await api.delete(`/users/me/plans/`, { data: { id: planId } });
 };

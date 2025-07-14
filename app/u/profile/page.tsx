@@ -169,8 +169,8 @@ export default function ProfilePage() {
             Manage your account and fitness preferences
           </p>
         </div>
-        <div className="mb-4">
           {/* Profile Overview */}
+        <div className="mb-4">
           {/* <div className="space-y-4 sm:space-y-6"></div> */}
           <FuturisticCard className="w-full" glowColor="blue">
             <CardHeader className="pb-3 sm:pb-6">
@@ -236,9 +236,7 @@ export default function ProfilePage() {
           </FuturisticCard>
         </div>
 
-        <div className=" flex flex-wrap justify-center gap-4">
-          {/* Progress Calendar */}
-          {/* <ProgressCalendar /> */}
+        <div className="grid lg:grid-cols-2 gap-4">
 
           {/* Profile Settings */}
           {/* <div className=" space-y-4 sm:space-y-6"></div> */}

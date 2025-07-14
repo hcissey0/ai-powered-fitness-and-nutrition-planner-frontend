@@ -2,10 +2,12 @@
 
 "use client";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useRef } from "react";
 
 export function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -35,16 +37,25 @@ export function AnimatedBackground() {
 
     const colors = ["#00d4ff", "#ff6b6b", "#4ecdc4", "#a8e6cf", "#ffd93d"];
 
+    let number_of_particles = 100;
+    if (isMobile) number_of_particles = 50;
+    let particle_size_scale = 5;
+    let particle_opacity = 1;
+    let connection_stroke_width = 2;
+    let connection_distance = 150;
+    if (isMobile) connection_distance = 100;
+
+
     // Create particles
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < number_of_particles; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         vx: (Math.random() - 0.5) * 0.5,
         vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 3 + 1,
+        size: Math.random() * particle_size_scale + 1,
         color: colors[Math.floor(Math.random() * colors.length)],
-        opacity: Math.random() * 0.5 + 0.2,
+        opacity: Math.random() * particle_opacity + 0.2,
       });
     }
 
@@ -80,11 +91,11 @@ export function AnimatedBackground() {
             const dy = particle.y - otherParticle.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < 100) {
+            if (distance < connection_distance) {
               ctx.save();
-              ctx.globalAlpha = ((100 - distance) / 100) * 0.1;
+              ctx.globalAlpha = ((connection_distance - distance) / connection_distance) * 0.1;
               ctx.strokeStyle = particle.color;
-              ctx.lineWidth = 1;
+              ctx.lineWidth = connection_stroke_width;
               ctx.beginPath();
               ctx.moveTo(particle.x, particle.y);
               ctx.lineTo(otherParticle.x, otherParticle.y);

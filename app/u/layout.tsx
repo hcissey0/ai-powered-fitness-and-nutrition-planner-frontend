@@ -15,18 +15,16 @@ export default function DashboardLayout({
 }>) {
   return (
     <SidebarProvider>
-      {/* <AppSidebar className="glass-sidebar" /> */}
+      <AppSidebar className="glass-sidebar" />
       <SidebarInset className="bg-transparent">
         <header className="glass-header sticky top-0 flex h-16 shrink-0 items-center justify-between gap-2 px-4 z-50">
+          
           <div className="flex gap-2 items-center">
-            <NavUser />
-          </div>
-          <div className="flex gap-2 items-center">
-{/* <SidebarTrigger className="-ml-1" />
+<SidebarTrigger className="-ml-1" />
           <Separator
             orientation="vertical"
             className="mr-2 data-[orientation=vertical]:h-4"
-          /> */}
+          />
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -35,11 +33,13 @@ export default function DashboardLayout({
             </BreadcrumbList>
           </Breadcrumb>
           </div>
-          
+          {/* <div className="flex gap-2 items-center">
+            <NavUser />
+          </div> */}
           
           
         </header>
-        <div className=" flex flex-1 flex-col gap-4 p-4 ">
+        <div className=" flex flex-1 flex-col gap-4 p-4 max-w-7xl xl:mx-auto">
             {children}
         </div>
         

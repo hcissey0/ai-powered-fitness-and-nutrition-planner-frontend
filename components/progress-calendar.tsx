@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FuturisticCard } from "@/components/futuristic-card";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDailyProgress } from "@/lib/api-service";
 import { DailyProgress } from "@/interfaces";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
+import { handleApiError } from "@/lib/error-handler";
+
 
 interface ProgressCalendarProps {
   className?: string;
@@ -40,7 +41,8 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
       
       setProgressData(response.progress);
     } catch (error) {
-      console.error("Failed to fetch progress data:", error);
+      // console.error("Failed to fetch progress data:", error);
+      handleApiError(error, "Failed to fetch progress data.")
       setProgressData([]);
     } finally {
       setIsLoading(false);
@@ -62,6 +64,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
       ? subMonths(currentMonth, 1) 
       : addMonths(currentMonth, 1);
     setCurrentMonth(newMonth);
+    fetchProgressData(newMonth);
   };
 
   const generateCalendarDays = (): CalendarDay[] => {
@@ -86,10 +89,10 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
   };
 
   const calendarDays = generateCalendarDays();
-  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const weekDays = [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat',];
 
   const ProgressBar = ({ value, color }: { value: number; color: string }) => (
-    <div className={`h-1 w-full ${color} rounded-full overflow-hidden`}>
+    <div className={`h-1 sm:h-2 w-full ${color} bg-muted rounded-full overflow-hidden`}>
       <div 
         className="h-full bg-current transition-all duration-300"
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
@@ -98,7 +101,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
   );
 
   return (
-    <FuturisticCard glowColor="purple" className={cn("max-w-lg", className)}>
+    <div className={cn("glass rounded-xl max-w-3xl p-3", className)}>
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between text-lg text-white">
           <div className="flex items-center gap-2">
@@ -150,23 +153,23 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
                 <div
                   key={index}
                   className={`
-                    relative aspect-square min-h-[40px] p-1 rounded-lg border transition-all duration-200
+                    relative aspect-square min-h-[20px] p-1 rounded-sm sm:rounded-md border transition-all duration-200
                     ${day.isCurrentMonth 
                       ? 'border-white/20 hover:border-white/40' 
                       : 'border-white/5'
                     }
                     ${day.isToday 
-                      ? 'ring-2 ring-purple-400 bg-purple-400/10' 
+                      ? 'ring-2 ring-primary bg-primary-400/10' 
                       : ''
                     }
                   `}
                 >
                   {/* Date number */}
                   <div className={`
-                    text-xs font-medium mb-1
+                    text-xs font-medium sm:mb-2
                     ${day.isCurrentMonth 
                       ? day.isToday 
-                        ? 'text-purple-300' 
+                        ? 'text-primary-300' 
                         : 'text-white' 
                       : 'text-muted-foreground'
                     }
@@ -176,7 +179,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
                   
                   {/* Progress bars */}
                   {day.progress && day.isCurrentMonth && (
-                    <div className="space-y-1">
+                    <div className="space-y-1 sm:space-y-2">
                       {/* Nutrition progress (blue, top) */}
                       <ProgressBar 
                         value={day.progress.nutrition_progress} 
@@ -193,7 +196,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
                   {/* Rest day indicator */}
                   {day.progress?.is_rest_day && day.isCurrentMonth && (
                     <div className="absolute top-1 right-1">
-                      <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                      <div className="w-2 h-2 md:w-4 md:h-4 bg-yellow-400 rounded-full animate-pulse" />
                     </div>
                   )}
                 </div>
@@ -201,23 +204,23 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
             </div>
             
             {/* Legend */}
-            <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-white/10">
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-1 bg-blue-400 rounded-full" />
+            <div className="flex text-xs md:text-lg items-center justify-center gap-4 mt-4 pt-4 border-t border-white/10">
+              <div className="flex items-center gap-2 ">
+                <div className="w-3 h-1 md:w-6 md:h-2 bg-blue-400 rounded-full" />
                 <span className="text-muted-foreground">Nutrition</span>
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-1 bg-red-400 rounded-full" />
+              <div className="flex items-center gap-2 ">
+                <div className="w-3 h-1 md:w-6 md:h-2 bg-red-400 rounded-full" />
                 <span className="text-muted-foreground">Workout</span>
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full" />
+              <div className="flex items-center gap-2 ">
+                <div className="w-2 h-2 md:w-4 md:h-4 bg-yellow-400 rounded-full" />
                 <span className="text-muted-foreground">Rest Day</span>
               </div>
             </div>
           </div>
         )}
       </CardContent>
-    </FuturisticCard>
+    </div>
   );
 }

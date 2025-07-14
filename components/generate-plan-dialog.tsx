@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { DateRange } from "react-day-picker";
-import { addDays, format } from "date-fns";
+import { DateRange, isDateInRange, rangeIncludesDate } from "react-day-picker";
+import { addDays, endOfWeek, format, startOfWeek } from "date-fns";
 import { handleApiError } from "@/lib/error-handler";
 import { getPlans, generatePlan } from "@/lib/api-service";
 import { FitnessPlan } from "@/interfaces";
@@ -36,6 +36,7 @@ export function GeneratePlanDialog({
     to: addDays(new Date(), 6), // Default to a 7-day plan
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedWeek, setSelectedWeek] = useState<DateRange | undefined>();
 
   useEffect(() => {
     if (open) {
@@ -67,16 +68,16 @@ export function GeneratePlanDialog({
   });
 
   const handleGenerate = async () => {
-    if (!date?.from || !date?.to) {
+    if (!selectedWeek?.from || !selectedWeek?.to) {
       toast.error("Please select a valid date range.");
       return;
     }
 
     setIsLoading(true);
     try {
+      toast.info("Generating Plan. This may take a while...")
       await generatePlan({
-        start_date: date.from.toISOString(),
-        end_date: date.to.toISOString(),
+        start_date: selectedWeek.from.toISOString(),
       });
       toast.success("New plan generated successfully!");
       onPlanGenerated();
@@ -97,19 +98,44 @@ export function GeneratePlanDialog({
             Generate New Fitness Plan
           </DialogTitle>
           <DialogDescription>
-            Select the start and end date for your new plan. Dates with
+            Select the <strong>week</strong> for your new plan. Dates with
             existing plans are disabled.
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center py-4">
           <Calendar
-            mode="range"
-            selected={date}
+            // mode="range"
             
-            onSelect={setDate}
+            // selected={date}
+            
+            // onSelect={setDate}
             disabled={disabledDates}
-            className="rounded-md border bg-background/50"
+            className="rounded-md bg-transparent"
             numberOfMonths={1}
+            modifiers={{
+              selected: selectedWeek,
+              range_start: selectedWeek?.from,
+              range_end: selectedWeek?.to,
+              range_middle: (date: Date) => 
+                selectedWeek
+              ? rangeIncludesDate(selectedWeek, date, true)
+              : false
+            }}
+            onDayClick={(day, modifiers) => {
+              if (modifiers.selected) {
+                setSelectedWeek(undefined);
+                return;
+              }
+              setSelectedWeek({
+                from: startOfWeek(day),
+                to: endOfWeek(day)
+              });
+            }}
+            // footer={
+            //   selectedWeek ?
+            //   `Week from ${selectedWeek?.from?.toLocaleDateString()} to ${selectedWeek?.to?.toLocaleDateString()}`
+            //   : "Select a week to generate plan for."
+            // }
           />
         </div>
         <DialogFooter>
