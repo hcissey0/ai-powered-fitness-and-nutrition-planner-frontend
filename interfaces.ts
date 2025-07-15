@@ -72,6 +72,7 @@ export interface NutritionDay {
   target_protein_grams?: number;
   target_carbs_grams?: number;
   target_fats_grams?: number;
+  target_water_litres?: number;
   meals: Meal[];
 }
 

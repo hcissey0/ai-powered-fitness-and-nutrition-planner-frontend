@@ -89,7 +89,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
   };
 
   const calendarDays = generateCalendarDays();
-  const weekDays = [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat',];
+  const weekDays = [ 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', ];
 
   const ProgressBar = ({ value, color }: { value: number; color: string }) => (
     <div className={`h-1 sm:h-2 w-full ${color} bg-muted rounded-full overflow-hidden`}>

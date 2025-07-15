@@ -109,6 +109,7 @@ export function GeneratePlanDialog({
             // selected={date}
             
             // onSelect={setDate}
+            weekStartsOn={1}
             disabled={disabledDates}
             className="rounded-md bg-transparent"
             numberOfMonths={1}
@@ -127,8 +128,8 @@ export function GeneratePlanDialog({
                 return;
               }
               setSelectedWeek({
-                from: startOfWeek(day),
-                to: endOfWeek(day)
+                from: startOfWeek(day, {weekStartsOn: 1}),
+                to: endOfWeek(day, {weekStartsOn: 1})
               });
             }}
             // footer={

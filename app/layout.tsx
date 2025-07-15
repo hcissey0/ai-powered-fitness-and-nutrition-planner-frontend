@@ -57,8 +57,15 @@ export default function RootLayout({
         </ThemeProvider>
           </AuthProvider>
           <Toaster visibleToasts={5} position={"top-right"}
-          richColors
+          // richColors
           closeButton
+          toastOptions={{
+            unstyled: true,
+            classNames: {
+              toast: "glass w-100 min-h-20 p-4 rounded-lg flex items-center space-x-2",
+              closeButton: "absolute top-0 right-0 rounded-full"
+            }
+          }}
           />
       </body>
     </html>

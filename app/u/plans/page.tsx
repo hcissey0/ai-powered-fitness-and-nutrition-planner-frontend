@@ -31,6 +31,8 @@ import {
   Target,
   Check,
   Droplets,
+  Timer,
+  Trophy,
 } from "lucide-react";
 import {
   getWorkoutTracking,
@@ -60,6 +62,7 @@ import { set } from "date-fns";
 import { rangeIncludesDate } from "react-day-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { ExerciseTimer } from "@/components/exercise-timer";
 
 
 const dayNames = [
@@ -89,12 +92,18 @@ export default function PlanPage() {
   const [dailyProgress, setDailyProgress] = useState<DailyProgress[]>([]);
   const [selectedNutritionDay, setSelectedNutritionDay] = useState<number>(new Date().getDay());
   const [waterIntake, setWaterIntake] = useState(2.1);
+
+  const [activeTimer, setActiveTimer] = useState<string | null>(null);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [selectedWorkoutDay, setSelectedWorkoutDay] = useState<number>(new Date().getDay());
+  
   
   const { user } = useAuth();
   
+  // Nutrition variables
   const currentNutrition = selectedPlan?.nutrition_days.find((n) => 
-  n.day_of_week === selectedNutritionDay)
-
+  n.day_of_week === selectedNutritionDay);
+  
   const consumedNutrients = currentNutrition?.meals
   .filter((meal) => mealTracking.find((mt)=>mt.meal === meal.id))
   .reduce((acc, meal) => ({
@@ -106,7 +115,39 @@ export default function PlanPage() {
   {calories:0, protein:0, carbs:0, fats:0};
 
   const loggedMeals = currentNutrition?.meals.filter(
-    (meal)=>mealTracking.find((mt)=>mt.meal===meal.id)).length
+    (meal)=>mealTracking.find((mt)=>mt.meal===meal.id)).length;
+    
+    // Workout variables
+    const currentWorkout = selectedPlan?.workout_days.find((n) => 
+    n.day_of_week === selectedWorkoutDay);
+
+  const completedToday = currentWorkout?.exercises
+  .filter((e) => workoutTracking.find((wt) => wt.exercise === e.id)).length;
+  // const completedExercises = workoutTracking.length;
+
+  const totalToday = currentWorkout?.exercises.length || 0;
+
+  const startTimer = (exerciseName: string, seconds: number) => {
+    setActiveTimer(exerciseName);
+    setTimerSeconds(seconds);
+
+    const interval = setInterval(() => {
+      setTimerSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setActiveTimer(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
 
   const addWater = () => {
     setWaterIntake((prev) => Math.min(prev + 0.25, 5))
@@ -268,23 +309,6 @@ export default function PlanPage() {
                 initialProgress={dailyProgress}
               /> */}
 
-              {selectedPlan && (
-                <Button
-                  onClick={async () => {
-                    try {
-                      await deletePlan(selectedPlan.id);
-                      toast.success("Plan deleted.");
-                      await fetchAllData(true);
-                    } catch (error) {
-                      handleApiError(error, "Failed to delete plan.");
-                    }
-                  }}
-                  variant="destructive"
-                  className="mb-4"
-                >
-                  Delete Selected Plan
-                </Button>
-              )}
               {plans.length > 0 && (
                 <div className="mb-4">
                   <label className="text-sm font-medium text-white mb-2 block">
@@ -336,6 +360,25 @@ export default function PlanPage() {
                     get started.
                   </p>
                 </div>
+              )}
+
+              {/* Delete Selected Plan */}
+              {selectedPlan && (
+                <Button
+                  onClick={async () => {
+                    try {
+                      await deletePlan(selectedPlan.id);
+                      toast.success("Plan deleted.");
+                      await fetchAllData(true);
+                    } catch (error) {
+                      handleApiError(error, "Failed to delete plan.");
+                    }
+                  }}
+                  variant="destructive"
+                  className="mb-4"
+                >
+                  Delete Selected Plan
+                </Button>
               )}
             </div>
 
@@ -391,7 +434,7 @@ export default function PlanPage() {
                               }
                               className={`relative h-16 flex-col py-1 ${
                                 selectedNutritionDay === index + 1
-                                  ? "bg-gradient-to-r from-primary to-accent"
+                                  ? "bg-green-800 text-white hover:bg-green-900"
                                   : "glass hover:bg-white/10"
                               }`}
                               onClick={() => setSelectedNutritionDay(index + 1)}
@@ -400,8 +443,8 @@ export default function PlanPage() {
                                 {dayNames[index]}
                               </div>
                               {isToday(selectedPlan, index + 1) && (
-                                <div className="text-white absolute  bg-green-700 w-2 h-2 md:w-4 md:h-4 rounded-full top-2 left-2">
-                                  <Check size={5} />
+                                <div className="text-white absolute border bg-green-500 w-4 h-4 md:w-4 md:h-4 rounded-full top-1 left-1">
+                                  <Check />
                                 </div>
                               )}
                               <div className="text-xs">
@@ -418,58 +461,65 @@ export default function PlanPage() {
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2 space-y-6">
                           {/* Daily Overview */}
-                    <Card className="glass">
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span className="flex items-center space-x-2">
-                            <Utensils className="h-5 w-5 text-green-600" />
-                            <span>Today's Meals</span>
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className="bg-green-100 text-green-800"
-                          >
-                            {loggedMeals}/{currentNutrition.meals.length} Logged
-                          </Badge>
-                        </CardTitle>
-                        <CardDescription>
-                          {currentNutrition.notes}
-                        </CardDescription>
-                        <Progress
-                          value={(loggedMeals / currentNutrition.meals.length) * 100}
-                          className="h-2"
-                        />
-                      </CardHeader>
-                    </Card>
+                          <Card className="glass">
+                            <CardHeader>
+                              <CardTitle className="flex items-center justify-between">
+                                <span className="flex items-center space-x-2">
+                                  <Utensils className="h-5 w-5 text-green-600" />
+                                  <span>Today's Meals</span>
+                                </span>
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-green-100 text-green-800"
+                                >
+                                  {loggedMeals}/{currentNutrition.meals.length}{" "}
+                                  Logged
+                                </Badge>
+                              </CardTitle>
+                              <CardDescription>
+                                {currentNutrition.notes}
+                              </CardDescription>
+                              <Progress
+                                value={
+                                  (loggedMeals /
+                                    currentNutrition.meals.length) *
+                                  100
+                                }
+                                className="h-2"
+                              />
+                            </CardHeader>
+                          </Card>
 
-                    {/* Meals List */}
-                    <div className="space-y-4">
-                      {currentNutrition &&
-                        currentNutrition.meals.map((meal, index) => {
-                          const mealKey = `${meal.meal_type}-${meal.description}`;
+                          {/* Meals List */}
+                          <div className="space-y-4">
+                            {currentNutrition &&
+                              currentNutrition.meals.map((meal, index) => {
+                                const mealKey = `${meal.meal_type}-${meal.description}`;
 
-                          const trackedItem = mealTracking.find(
-                            (t) =>
-                              t.meal === meal.id &&
-                              new Date(t.date_completed).toDateString() ===
-                                new Date().toDateString()
-                          );
-                          const isTracked = !!trackedItem;
+                                const trackedItem = mealTracking.find(
+                                  (t) =>
+                                    t.meal === meal.id 
+                                  // &&
+                                  //   new Date(
+                                  //     t.date_completed
+                                  //   ).toDateString() ===
+                                  //     new Date().toDateString()
+                                );
+                                const isTracked = !!trackedItem;
 
-                          return (
-                            <Card
-                              key={index}
-                              className={`transition-all ${
-                                isTracked
-                                  ? "gradient-bg border-none"
-                                  : "glass hover:shadow-md"
-                              }`}
-                            >
-                              <CardContent className="flex flex-col p">
-                                
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    {/* <Checkbox
+                                return (
+                                  <Card
+                                    key={index}
+                                    className={`transition-all ${
+                                      isTracked
+                                        ? "bg-muted border-none"
+                                        : "glass hover:shadow-md"
+                                    }`}
+                                  >
+                                    <CardContent className="flex flex-col p">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-3">
+                                          {/* <Checkbox
                                       checked={isTracked}
                                       onCheckedChange={() =>
                                         handleTrackItem(
@@ -481,253 +531,254 @@ export default function PlanPage() {
                                       }
                                       className="h-5 w-5"
                                     /> */}
-                                    <div className="flex items-center space-x-2">
-                                      <span className="text-2xl">
-                                        {
-                                          mealIcons[
-                                            meal.meal_type as keyof typeof mealIcons
-                                          ]
-                                        }
-                                      </span>
-                                      <div>
-                                        <h4
-                                          className={`font-semibold capitalize ${
-                                            isTracked
-                                              ? "line-through text-gray-500"
-                                              : ""
-                                          }`}
-                                        >
-                                          {meal.meal_type}
-                                        </h4>
-                                        <p
-                                          className={`text-sm ${
-                                            isTracked
-                                              ? "line-through text-muted"
-                                              : "text-white"
-                                          }`}
-                                        >
-                                          {meal.description}
-                                        </p>
+                                          <div className="flex items-center space-x-2">
+                                            <span className="text-2xl">
+                                              {
+                                                mealIcons[
+                                                  meal.meal_type as keyof typeof mealIcons
+                                                ]
+                                              }
+                                            </span>
+                                            <div>
+                                              <h4
+                                                className={`font-semibold capitalize ${
+                                                  isTracked
+                                                    ? "line-through text-gray-500"
+                                                    : ""
+                                                }`}
+                                              >
+                                                {meal.meal_type}
+                                              </h4>
+                                              <p
+                                                className={`text-sm ${
+                                                  isTracked
+                                                    ? "line-through text-muted"
+                                                    : "text-white"
+                                                }`}
+                                              >
+                                                {meal.description}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        {!isTracked && (
+                                          <div className="text-right">
+                                            <div className="font-semibold text-lg">
+                                              {meal.calories} kcal
+                                            </div>
+                                            <div className="text-xs text-white">
+                                              {meal.portion_size}
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-semibold text-lg">
-                                      {meal.calories} kcal
-                                    </div>
-                                    <div className="text-xs text-white">
-                                      {meal.portion_size}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
-                                  <div className="text-center p-2 bg-rose-500/20 rounded-md">
-                                    <div className="font-bold text-rose-600">
-                                      {meal.protein_grams}g
-                                    </div>
-                                    <div className="text-xs text-white">
-                                      Protein
-                                    </div>
-                                  </div>
-                                  <div className="text-center p-2 bg-blue-500/20 rounded-md">
-                                    <div className="font-bold text-blue-600">
-                                      {meal.carbs_grams}g
-                                    </div>
-                                    <div className="text-xs text-white">
-                                      Carbs
-                                    </div>
-                                  </div>
-                                  <div className="text-center p-2 bg-yellow-500/20 rounded-md">
-                                    <div className="font-bold text-yellow-600">
-                                      {meal.fats_grams}g
-                                    </div>
-                                    <div className="text-xs text-white">
-                                      Fats
-                                    </div>
-                                  </div>
-                                </div>
-                              </CardContent>
-                              <CardFooter className="flex justify-end">
-                                <Button
-                                  className={` text-white border-green-500 ${
-                                    isTracked
-                                      ? "bg-green-500/10 hover:bg-green-500/20"
-                                      : "bg-green-500/70 hover:bg-green-500/80"
-                                  } `}
-                                  onClick={() =>
-                                    handleTrackItem(
-                                      isTracked ? "untrack" : "track",
-                                      "meal",
-                                      meal.id,
-                                      trackedItem?.id
-                                    )
-                                  }
-                                >
-                                  {isTracked && <Check />}
-                                  {isTracked ? "Done" : "Mark as Done"}
-                                </Button>
-
-                              </CardFooter>
-                            </Card>
-                          );
-                        })}
-                    </div>
+                                      {!isTracked && (
+                                        <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
+                                          <div className="text-center p-2 bg-rose-500/20 rounded-md">
+                                            <div className="font-bold text-rose-600">
+                                              {meal.protein_grams}g
+                                            </div>
+                                            <div className="text-xs text-white">
+                                              Protein
+                                            </div>
+                                          </div>
+                                          <div className="text-center p-2 bg-blue-500/20 rounded-md">
+                                            <div className="font-bold text-blue-600">
+                                              {meal.carbs_grams}g
+                                            </div>
+                                            <div className="text-xs text-white">
+                                              Carbs
+                                            </div>
+                                          </div>
+                                          <div className="text-center p-2 bg-yellow-500/20 rounded-md">
+                                            <div className="font-bold text-yellow-600">
+                                              {meal.fats_grams}g
+                                            </div>
+                                            <div className="text-xs text-white">
+                                              Fats
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </CardContent>
+                                    <CardFooter className="flex justify-end">
+                                      <Button
+                                        className={` text-white border-green-500 ${
+                                          isTracked
+                                            ? "bg-green-500/10 hover:bg-green-500/20"
+                                            : "bg-green-500/70 hover:bg-green-500/80"
+                                        } `}
+                                        onClick={() =>
+                                          handleTrackItem(
+                                            isTracked ? "untrack" : "track",
+                                            "meal",
+                                            meal.id,
+                                            trackedItem?.id
+                                          )
+                                        }
+                                      >
+                                        {isTracked && <Check />}
+                                        {isTracked ? "Done" : "Mark as Done"}
+                                      </Button>
+                                    </CardFooter>
+                                  </Card>
+                                );
+                              })}
+                          </div>
                         </div>
 
                         {/* Nutrition Stats Sidebar */}
-                    <div className="space-y-6">
-                      {/* Daily Targets */}
-                      {consumedNutrients && currentNutrition && (
-                        <Card className="glass">
-                          <CardHeader>
-                            <CardTitle className="flex items-center space-x-2">
-                              <Target className="h-5 w-5 text-green-600" />
-                              <span>Daily Targets</span>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div>
-                              <div className="flex justify-between text-sm mb-2">
-                                <span>Calories</span>
-                                <span>
-                                  {consumedNutrients.calories}/
-                                  {currentNutrition?.target_calories}
-                                </span>
+                        <div className="space-y-6">
+                          {/* Daily Targets */}
+                          {/* {consumedNutrients && currentNutrition && ()} */}
+                          <Card className="glass">
+                            <CardHeader>
+                              <CardTitle className="flex items-center space-x-2">
+                                <Target className="h-5 w-5 text-green-600" />
+                                <span>Daily Targets</span>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                  <span>Calories</span>
+                                  <span>
+                                    {consumedNutrients.calories}/
+                                    {currentNutrition?.target_calories}
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={
+                                    (consumedNutrients.calories /
+                                      currentNutrition.target_calories!) *
+                                    100
+                                  }
+                                  className="h-2"
+                                />
                               </div>
-                              <Progress
-                                value={
-                                  (consumedNutrients.calories /
-                                    currentNutrition.target_calories!) *
-                                  100
-                                }
-                                className="h-2"
-                              />
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-sm mb-2">
-                                <span>Protein</span>
-                                <span>
-                                  {consumedNutrients.protein}g/
-                                  {currentNutrition.target_protein_grams}g
-                                </span>
+                              <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                  <span>Protein</span>
+                                  <span>
+                                    {consumedNutrients.protein}g/
+                                    {currentNutrition.target_protein_grams}g
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={
+                                    (consumedNutrients.protein /
+                                      currentNutrition.target_protein_grams!) *
+                                    100
+                                  }
+                                  className="h-2"
+                                />
                               </div>
-                              <Progress
-                                value={
-                                  (consumedNutrients.protein /
-                                    currentNutrition.target_protein_grams!) *
-                                  100
-                                }
-                                className="h-2"
-                              />
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-sm mb-2">
-                                <span>Carbs</span>
-                                <span>
-                                  {consumedNutrients.carbs}g/
-                                  {currentNutrition.target_carbs_grams}g
-                                </span>
+                              <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                  <span>Carbs</span>
+                                  <span>
+                                    {consumedNutrients.carbs}g/
+                                    {currentNutrition.target_carbs_grams}g
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={
+                                    (consumedNutrients.carbs /
+                                      currentNutrition.target_carbs_grams!) *
+                                    100
+                                  }
+                                  className="h-2"
+                                />
                               </div>
-                              <Progress
-                                value={
-                                  (consumedNutrients.carbs /
-                                    currentNutrition.target_carbs_grams!) *
-                                  100
-                                }
-                                className="h-2"
-                              />
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-sm mb-2">
-                                <span>Fats</span>
-                                <span>
-                                  {consumedNutrients.fats}g/
-                                  {currentNutrition.target_fats_grams}g
-                                </span>
+                              <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                  <span>Fats</span>
+                                  <span>
+                                    {consumedNutrients.fats}g/
+                                    {currentNutrition.target_fats_grams}g
+                                  </span>
+                                </div>
+                                <Progress
+                                  value={
+                                    (consumedNutrients.fats /
+                                      currentNutrition.target_fats_grams!) *
+                                    100
+                                  }
+                                  className="h-2"
+                                />
                               </div>
-                              <Progress
-                                value={
-                                  (consumedNutrients.fats /
-                                    currentNutrition.target_fats_grams!) *
-                                  100
-                                }
-                                className="h-2"
-                              />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                      {/* Water Intake */}
-                      <Card className="glass">
-                        <CardHeader>
-                          <CardTitle className="flex items-center space-x-2">
-                            <Droplets className="h-5 w-5 text-blue-600" />
-                            <span>Water Intake</span>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="text-center">
-                            <div className="text-3xl font-bold text-blue-600">
-                              {waterIntake}L
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              of 3.0L target
-                            </div>
-                          </div>
-                          <Progress
-                            value={(waterIntake / 3.0) * 100}
-                            className="h-3"
-                          />
-                          <Button
-                            onClick={addWater}
-                            className="w-full bg-blue-600 hover:bg-blue-700"
-                            disabled={waterIntake >= 3.0}
-                          >
-                            <Droplets className="h-4 w-4 mr-2" />
-                            Add 250ml
-                          </Button>
-                          <div className="grid grid-cols-4 gap-1">
-                            {Array.from({ length: 12 }, (_, i) => (
-                              <div
-                                key={i}
-                                className={`h-6 rounded ${
-                                  i < waterIntake * 4
-                                    ? "bg-blue-500"
-                                    : "bg-gray-200"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
+                            </CardContent>
+                          </Card>
 
-                      {/* Quick Stats */}
-                      <Card className="glass">
-                        <CardHeader>
-                          <CardTitle className="text-lg">
-                            Nutrition Tips
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2 text-sm text-white">
-                            <p>
-                              🥘 Traditional Ghanaian meals are naturally
-                              balanced
-                            </p>
-                            <p>💧 Drink water before each meal</p>
-                            <p>🍌 Include local fruits for vitamins</p>
-                            <p>🐟 Fish provides excellent protein</p>
-                            <p>🌶️ Pepper sauce adds flavor without calories</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                          {/* Water Intake */}
+                          <Card className="glass">
+                            <CardHeader>
+                              <CardTitle className="flex items-center space-x-2">
+                                <Droplets className="h-5 w-5 text-blue-600" />
+                                <span>Water Intake</span>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="text-center">
+                                <div className="text-3xl font-bold text-blue-600">
+                                  {waterIntake}L
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  of 3.0L target
+                                </div>
+                              </div>
+                              <Progress
+                                value={(waterIntake / 3.0) * 100}
+                                className="h-3"
+                              />
+                              <Button
+                                onClick={addWater}
+                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                disabled={waterIntake >= 3.0}
+                              >
+                                <Droplets className="h-4 w-4 mr-2" />
+                                Add 250ml
+                              </Button>
+                              <div className="grid grid-cols-4 gap-1">
+                                {Array.from({ length: 12 }, (_, i) => (
+                                  <div
+                                    key={i}
+                                    className={`h-6 rounded ${
+                                      i < waterIntake * 4
+                                        ? "bg-blue-500"
+                                        : "bg-gray-200"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Quick Stats */}
+                          <Card className="glass">
+                            <CardHeader>
+                              <CardTitle className="text-lg">
+                                Nutrition Tips
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-2 text-sm text-white">
+                                <p>
+                                  🥘 Traditional Ghanaian meals are naturally
+                                  balanced
+                                </p>
+                                <p>💧 Drink water before each meal</p>
+                                <p>🍌 Include local fruits for vitamins</p>
+                                <p>🐟 Fish provides excellent protein</p>
+                                <p>
+                                  🌶️ Pepper sauce adds flavor without calories
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
                       </div>
                     )}
-
-                    
-
-                    
 
                     {/* {selectedPlan.nutrition_days.map(
                       (nutritionDay, dayIndex) => {
@@ -864,7 +915,342 @@ export default function PlanPage() {
                     transition={{ delay: 0.1 }}
                     className="space-y-4 sm:space-y-6"
                   >
-                    {selectedPlan.workout_days.map((workoutDay, dayIndex) => {
+                    {/* Day Picker */}
+                    <Card className="glass">
+                      <CardHeader>
+                        <CardTitle className="flex items-center space-x-2">
+                          <Calendar className="h-5 w-5 text-blue-600" />
+                          <span>Weekly Workout Schedule</span>
+                        </CardTitle>
+                        <CardDescription>
+                          Your personalized workout plan
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                          {selectedPlan.workout_days.map((day, index) => (
+                            <Button
+                              key={day.day_of_week}
+                              variant={
+                                selectedWorkoutDay === day.day_of_week
+                                  ? "default"
+                                  : "outline"
+                              }
+                              className={`relative h-20 flex-col space-y-1 ${
+                                selectedWorkoutDay === day.day_of_week
+                                  ? "bg-cyan-800 text-white hover:bg-cyan-900"
+                                  : day.is_rest_day
+                                    ? "bg-green-500/50 text-gray-500"
+                                     :"glass "
+                              }`}
+                              // disabled={day.is_rest_day}
+                              onClick={() =>
+                                setSelectedWorkoutDay(day.day_of_week)
+                              }
+                            >
+                              {isToday(selectedPlan, day.day_of_week) && (
+                                <div className="text-white absolute border bg-green-500 w-4 h-4 md:w-4 md:h-4 rounded-full top-1 left-1">
+                                  <Check />
+                                </div>
+                              )}
+                              <div className="text-xs font-medium">
+                                {dayNames[index]}
+                              </div>
+                              <div className="text-xs text-center">
+                                {day.is_rest_day
+                                  ? "Rest"
+                                  : day.title.split(" ")[0]}
+                              </div>
+                              {!day.is_rest_day && (
+                                <div className="text-xs opacity-75">
+                                  {day.exercises.length} exercises
+                                </div>
+                              )}
+                            </Button>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Current Day Workout */}
+                    {currentWorkout && (
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                          <Card className="glass">
+                            <CardHeader>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <CardTitle className="flex items-center space-x-2">
+                                    <Dumbbell className="h-5 w-5 text-green-600" />
+                                    <span>{currentWorkout.title}</span>
+                                  </CardTitle>
+                                  <CardDescription>
+                                    {currentWorkout.description}
+                                  </CardDescription>
+                                </div>
+                                {!currentWorkout.is_rest_day && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-green-100 text-green-800"
+                                  >
+                                    {completedToday}/{totalToday} Complete
+                                  </Badge>
+                                )}
+                              </div>
+                              {!currentWorkout.is_rest_day && (
+                                <Progress
+                                  value={(completedToday / totalToday) * 100}
+                                  className="h-2"
+                                />
+                              )}
+                            </CardHeader>
+                            <CardContent>
+                              {currentWorkout.is_rest_day ? (
+                                <div className="text-center py-12">
+                                  <div className="text-6xl mb-4">🧘‍♂️</div>
+                                  <h3 className="text-xl font-semibold mb-2">
+                                    Rest Day
+                                  </h3>
+                                  <p className="text-white">
+                                    Take time to recover and prepare for
+                                    tomorrow's workout
+                                  </p>
+                                  <div className="mt-6 space-y-2">
+                                    <p className="text-sm text-neutral-200">
+                                      Suggested activities:
+                                    </p>
+                                    <div className="flex flex-wrap justify-center gap-2 opacity-80">
+                                      <Badge className="">
+                                        Light stretching
+                                      </Badge>
+                                      <Badge className="">Walking</Badge>
+                                      <Badge className="">
+                                        Meditation
+                                      </Badge>
+                                      <Badge className="">Hydration</Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  {currentWorkout.exercises.map(
+                                    (exercise, index) => {
+                                      const trackedItem = workoutTracking.find((wt) => 
+                                      wt.exercise === exercise.id)
+                                      const isTracked = !!trackedItem;
+                                      return (
+                                        <Card
+                                          key={index}
+                                          className={`transition-all ${
+                                            isTracked
+                                              ? "bg-transparent border-none"
+                                              : "glass"
+                                          }`}
+                                        >
+                                          <CardContent className="p-4">
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center space-x-3">
+                                                
+                                                <div>
+                                                  <h4
+                                                    className={`font-semibold ${
+                                                      isTracked
+                                                        ? "line-through text-white"
+                                                        : ""
+                                                    }`}
+                                                  >
+                                                    {exercise.name}
+                                                  </h4>
+                                                  {!isTracked && 
+                                                  <>
+                                                  <div className="flex items-center space-x-4 text-sm text-white">
+                                                    <span>
+                                                      {exercise.sets} sets
+                                                    </span>
+                                                    <span>
+                                                      {exercise.reps} reps
+                                                    </span>
+                                                    <span className="flex items-center space-x-1">
+                                                      <Clock className="h-3 w-3" />
+                                                      <span>
+                                                        {
+                                                          exercise.rest_period_seconds
+                                                        }
+                                                        s rest
+                                                      </span>
+                                                    </span>
+                                                  </div>
+                                                  {exercise.notes && (
+                                                    <p className="text-xs text-white mt-1">
+                                                      {exercise.notes}
+                                                    </p>
+                                                  )}
+                                                  </>
+                                                }
+                                                </div>
+                                              </div>
+                                              {!isTracked && 
+                                              <ExerciseTimer 
+                                              exerciseName={exercise.name}
+                                              restPeriodSeconds={exercise.rest_period_seconds}
+                                              activeTimer={activeTimer}
+                                              setActiveTimer={setActiveTimer}
+                                              timerSeconds={timerSeconds}
+                                              setTimerSeconds={setTimerSeconds}
+                                              onTimerComplete={(name) => console.log("Timer completed", name)}
+                                              playSound
+                                              />
+                                              // <div className="flex items-center space-x-2">
+                                              //   {activeTimer ===
+                                              //   exercise.name ? (
+                                              //     <div className="flex items-center space-x-2 text-orange-600">
+                                              //       <Timer className="h-4 w-4" />
+                                              //       <span className="font-mono font-bold">
+                                              //         {formatTime(timerSeconds)}
+                                              //       </span>
+                                              //     </div>
+                                              //   ) : (
+                                              //     <Button
+                                              //       size="sm"
+                                                    
+                                              //       onClick={() =>
+                                              //         startTimer(
+                                              //           exercise.name,
+                                              //           exercise.rest_period_seconds
+                                              //         )
+                                              //       }
+                                              //       className="flex items-center space-x-1 bg-accent/20 hover:bg-accent text-white"
+                                              //     >
+                                              //       <Play className="h-3 w-3" />
+                                              //       <span>Timer</span>
+                                              //     </Button>
+                                              //   )}
+                                              // </div>
+                                              }
+                                            </div>
+                                          </CardContent>
+                                          <CardFooter className="flex justify-end">
+                                            <Button
+                                              className={` text-white border-green-500 ${
+                                                isTracked
+                                                  ? "bg-green-500/10 hover:bg-green-500/20"
+                                                  : "bg-green-500/70 hover:bg-green-500/80"
+                                              } `}
+                                              onClick={() =>
+                                                handleTrackItem(
+                                                  isTracked
+                                                    ? "untrack"
+                                                    : "track",
+                                                  "workout",
+                                                  exercise.id,
+                                                  trackedItem?.id
+                                                )
+                                              }
+                                            >
+                                              {isTracked && <Check />}
+                                              {isTracked
+                                                ? "Done"
+                                                : "Mark as Done"}
+                                            </Button>
+                                          </CardFooter>
+                                        </Card>
+                                      );}
+                                  )}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        {/* Workout Stats Sidebar */}
+                        <div className="space-y-6">
+                          <Card className="glass">
+                            <CardHeader>
+                              <CardTitle className="text-lg">
+                                Today's Progress
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="text-center">
+                                <div className="text-3xl font-bold text-green-600">
+                                  {completedToday}
+                                </div>
+                                <div className="text-sm text-white">
+                                  of {totalToday} exercises
+                                </div>
+                              </div>
+                              {!currentWorkout.is_rest_day && (
+                                <Progress
+                                  value={(completedToday / totalToday) * 100}
+                                  className="h-3"
+                                />
+                              )}
+                              {completedToday === totalToday &&
+                                totalToday > 0 && (
+                                  <div className="text-center p-4 rounded-lg animate-pulse">
+                                    <Trophy className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                                    <p className="text-sm font-semibold text-green-400">
+                                      Workout Complete!
+                                    </p>
+                                  </div>
+                                )}
+                            </CardContent>
+                          </Card>
+                                {/* Quick Stats */}
+                          <Card className="glass">
+                            <CardHeader>
+                              <CardTitle className="text-lg">
+                                Quick Stats
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-400">
+                                  This Week
+                                </span>
+                                <span className="text-sm font-semibold">
+                                  3/5 workouts
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-400">
+                                  Streak
+                                </span>
+                                <span className="text-sm font-semibold">
+                                  7 days
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-400">
+                                  Total Exercises
+                                </span>
+                                <span className="text-sm font-semibold">
+                                  156
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                                {/* Tips */}
+                          <Card className="glass">
+                            <CardHeader>
+                              <CardTitle className="text-lg">Tips</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-2 text-sm text-white">
+                                <p>💡 Focus on proper form over speed</p>
+                                <p>💧 Stay hydrated throughout your workout</p>
+                                <p>⏰ Use the rest timer between sets</p>
+                                <p>
+                                  🎯 Listen to your body and adjust as needed
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* {selectedPlan.workout_days.map((workoutDay, dayIndex) => {
                       const dayDate = new Date(selectedPlan.start_date);
                       dayDate.setDate(
                         dayDate.getDate() + workoutDay.day_of_week
@@ -961,7 +1347,7 @@ export default function PlanPage() {
                             )}
                         </FuturisticCard>
                       );
-                    })}
+                    })} */}
                   </motion.div>
                 </TabsContent>
               </Tabs>
