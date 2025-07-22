@@ -60,7 +60,7 @@ function TimerToastContent({
   };
 
   return (
-    <div className="p-4 rounded-xl flex items-center justify-between w-full">
+    <div className="border p-4 flex items-center justify-between w-full">
       <div className="flex flex-col">
         <div className="font-semibold text-sm mb-1">
           {exerciseName} Rest Timer
@@ -253,11 +253,12 @@ export function ExerciseTimer({
   return (
     <div className="flex items-center space-x-2">
       {isActive && showInlineTimer ? (
-        <div className="flex items-center space-x-2 text-orange-600">
+        <div className="flex flex-col justify-center items-center space-x-2 text-orange-600">
           <Timer className="h-4 w-4" />
           <span className="font-mono font-bold">
             {formatTime(timerSeconds)}
           </span>
+          
           <Button
             size="sm"
             variant="outline"

@@ -32,41 +32,41 @@ export const setAuthToken = (token: string | null) => {
 }
 
 
-api.interceptors.response.use(
-    async (response: AxiosResponse) => {
-        try {
-            console.log('Response received:', response);
-            const userRes = await plainAxios.get('/users/me/');
-            if (userRes.status === 200) {
-                const user = userRes.data;
-                localStorage.setItem('fitness_user', JSON.stringify(user));
-                Cookies.set('fitness)user', JSON.stringify(user), { expires: 7 }); // Set cookie with 7 days expiration
-                console.log('User data updated:', user);
-            } else {
-                localStorage.removeItem('fitness_user');
-                Cookies.remove('fitness_user'); // Remove cookie if user data is not available
-            }
-        } catch (error) {
-            // console.error('Error fetching user data:', error);
-        }
-        return response;
-    },
-    async (error) => {
-        try {
-            const userRes = await plainAxios.get('/users/me/');
-            if (userRes.status === 200) {
-                const user = userRes.data;
-                localStorage.setItem('fitness_user', JSON.stringify(user));
-                Cookies.set('fitness_user', JSON.stringify(user), { expires: 7 }); // Set cookie with 7 days expiration
-                console.log('User data updated:', user);
-            } else {
-                localStorage.removeItem('fitness_user');
-                Cookies.remove('fitness_user'); // Remove cookie if user data is not available
-            }
-        } catch (error) {
-            // console.error('Error fetching user data:', error);
-        }
-        return Promise.reject(error);
-        }
+// api.interceptors.response.use(
+//     async (response: AxiosResponse) => {
+//         try {
+//             console.log('Response received:', response);
+//             const userRes = await plainAxios.get('/users/me/');
+//             if (userRes.status === 200) {
+//                 const user = userRes.data;
+//                 localStorage.setItem('fitness_user', JSON.stringify(user));
+//                 Cookies.set('fitness)user', JSON.stringify(user), { expires: 7 }); // Set cookie with 7 days expiration
+//                 console.log('User data updated:', user);
+//             } else {
+//                 localStorage.removeItem('fitness_user');
+//                 Cookies.remove('fitness_user'); // Remove cookie if user data is not available
+//             }
+//         } catch (error) {
+//             // console.error('Error fetching user data:', error);
+//         }
+//         return response;
+//     },
+//     async (error) => {
+//         try {
+//             const userRes = await plainAxios.get('/users/me/');
+//             if (userRes.status === 200) {
+//                 const user = userRes.data;
+//                 localStorage.setItem('fitness_user', JSON.stringify(user));
+//                 Cookies.set('fitness_user', JSON.stringify(user), { expires: 7 }); // Set cookie with 7 days expiration
+//                 console.log('User data updated:', user);
+//             } else {
+//                 localStorage.removeItem('fitness_user');
+//                 Cookies.remove('fitness_user'); // Remove cookie if user data is not available
+//             }
+//         } catch (error) {
+//             // console.error('Error fetching user data:', error);
+//         }
+//         return Promise.reject(error);
+//         }
         
-)
+// )

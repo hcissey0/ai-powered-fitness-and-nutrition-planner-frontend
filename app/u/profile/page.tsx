@@ -50,7 +50,7 @@ import { ProgressCalendar } from "@/components/progress-calendar";
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   // Initialize with empty/default values instead of depending on user immediately
   const [profileData, setProfileData] = useState<Partial<Profile>>({});
@@ -111,6 +111,7 @@ export default function ProfilePage() {
       toast.success("Profile Updated", {
         description: "Your profile has been successfully updated.",
       });
+      refreshUser();
     } catch (error) {
       console.error("Profile update error:", error);
       toast.error("Error", {
@@ -135,6 +136,7 @@ export default function ProfilePage() {
       toast.success("Personal Information Updated", {
         description: "Your personal information has been successfully updated.",
       });
+      refreshUser();
     } catch (error) {
       console.error("User update error:", error);
       toast.error("Error", {
@@ -319,7 +321,7 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              {/* <div>
+              <div>
                 <Button
                   onClick={handleSaveUserDetails}
                   disabled={isLoading}
@@ -337,7 +339,7 @@ export default function ProfilePage() {
                     </>
                   )}
                 </Button>
-              </div> */}
+              </div>
             </CardContent>
           </FuturisticCard>
 
@@ -672,7 +674,7 @@ export default function ProfilePage() {
         <div className="mt-4 flex justify-center">
           {/* Save Button */}
           <Button
-            onClick={()=> {handleSave();handleSaveUserDetails()}}
+            onClick={handleSave}
             disabled={isLoading}
             className="max-w-xl md:w-sm cyber-button h-9 sm:h-10 text-white font-semibold"
             size="sm"

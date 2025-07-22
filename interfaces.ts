@@ -60,14 +60,14 @@ export interface Exercise {
   sets: number;
   reps: string;
   rest_period_seconds: number;
-  notes: string;
+  notes?: string;
 }
 
 export interface NutritionDay {
   id: number;
   plan: number;
   day_of_week: number;
-  notes: string;
+  notes?: string;
   target_calories?: number;
   target_protein_grams?: number;
   target_carbs_grams?: number;
@@ -95,7 +95,7 @@ export interface WorkoutTracking {
   exercise_sets: number;
   date_completed: string;
   sets_completed: number;
-  notes: string;
+  notes?: string;
   created_at: string;
 }
 
@@ -106,7 +106,17 @@ export interface MealTracking {
   meal_type: string;
   date_completed: string;
   portion_consumed: number;
-  notes: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface WaterTracking {
+  id: number;
+  date: string;
+  nutrition_day: number;
+  litres_consumed: number;
+  target_litres: number;
+  notes?: string;
   created_at: string;
 }
 
@@ -114,6 +124,8 @@ export interface DailyProgress {
   date: string;
   day_of_week: number;
   workout_progress: number;
+  total_workout: number;
   nutrition_progress: number;
+  total_nutrition: number;
   is_rest_day: boolean;
 }

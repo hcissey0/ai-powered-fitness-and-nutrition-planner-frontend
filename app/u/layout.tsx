@@ -5,6 +5,7 @@ import { ModeToggle } from "@/components/theme-provider";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarProvider, SidebarInset, SidebarTrigger,  } from "@/components/ui/sidebar";
+import { DataProvider } from "@/context/data-context";
 
 import { toast } from "sonner";
 
@@ -14,6 +15,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
+    
     <SidebarProvider>
       <AppSidebar className="glass-sidebar" />
       <SidebarInset className="bg-transparent">
@@ -35,12 +37,14 @@ export default function DashboardLayout({
           </div>
           {/* <div className="flex gap-2 items-center">
             <NavUser />
-          </div> */}
+            </div> */}
           
           
         </header>
         <div className=" flex flex-1 flex-col gap-4 p-4 max-w-7xl xl:mx-auto">
+            <DataProvider>
             {children}
+            </DataProvider>
         </div>
         
       </SidebarInset>

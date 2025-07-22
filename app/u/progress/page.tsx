@@ -32,23 +32,17 @@ export default function ProgressPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Your Progress</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Workout and Meal Calendar</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <h1 className="text-4xl font-bold bg-clip-text bg-gradient-to-r from-pink-500 to-teal-500">Your Progress</h1>
+      <div className="flex flex-col gap-4 ">
+
+      <div>
           <ProgressCalendar initialProgress={progress} />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Progress Over Time</CardTitle>
-        </CardHeader>
-        <CardContent>
+      </div>
+      <div className={"glass p-4 rounded-xl flex flex-col gap-4"}>
+        <CardTitle>Progress Over Time</CardTitle>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={progress}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid stroke="" />
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
@@ -56,17 +50,18 @@ export default function ProgressPage() {
               <Line
                 type="monotone"
                 dataKey="workout_progress"
-                stroke="#8884d8"
+                stroke="#ff6b6b"
               />
               <Line
                 type="monotone"
                 dataKey="nutrition_progress"
-                stroke="#82ca9d"
-              />
+                stroke="#00d4ff"
+                />
             </LineChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+
+      </div>
+                </div>
     </div>
   );
 }

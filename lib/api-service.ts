@@ -1,4 +1,4 @@
-import { FitnessPlan, Profile, WorkoutTracking, MealTracking, DailyProgress } from "@/interfaces";
+import { FitnessPlan, Profile, WorkoutTracking, MealTracking, DailyProgress, WaterTracking } from "@/interfaces";
 import { api } from "@/lib/axios";
 
 export const createProfile = async (
@@ -77,15 +77,15 @@ export const createWorkoutTracking = async (
   return response.data;
 };
 
+export const deleteWorkoutTracking = async (trackingId: number): Promise<void> => {
+  await api.delete("/users/me/workout-tracking/", { data: { id: trackingId } });
+};
+
 // Meal Tracking API functions
 export const getMealTracking = async (date?: string): Promise<MealTracking[]> => {
   const params = date ? { date } : {};
   const response = await api.get<MealTracking[]>("/users/me/meal-tracking/", { params });
   return response.data;
-};
-
-export const deleteWorkoutTracking = async (trackingId: number): Promise<void> => {
-  await api.delete("/users/me/workout-tracking/", { data: { id: trackingId } });
 };
 
 export const createMealTracking = async (
@@ -99,6 +99,26 @@ export const createMealTracking = async (
 export const deleteMealTracking = async (trackingId: number): Promise<void> => {
   await api.delete("/users/me/meal-tracking/", { data: { id: trackingId } });
 };
+
+
+// Water tracking functions
+export const getWaterTracking = async (date?: string): Promise<WaterTracking[]> => {
+  const params = date ? { date } : {};
+  const response = await api.get<WaterTracking[]>("/users/me/water-tracking/", { params });
+  return response.data;
+}
+
+export const createWaterTracking = async (
+  trackingData: Omit<WaterTracking, 'id' | 'created_at' | 'target_litres'>
+): Promise<WaterTracking> => {
+  console.log("Creating water tracking data with", trackingData);
+  const response = await api.post<WaterTracking>("/users/me/water-tracking/", trackingData);
+  return response.data;
+}
+
+export const deleteWaterTracking = async (trackingId: number): Promise<void> => {
+  await api.delete("/users/me/water-tracking", { data: {id: trackingId}});
+}
 
 // Daily Progress API function
 export const getDailyProgress = async (

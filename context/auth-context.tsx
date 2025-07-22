@@ -11,6 +11,7 @@ import { api, setAuthToken } from "@/lib/axios"; // custom axios setup
 import Cookies from "js-cookie";
 import { User } from "@/interfaces"; // Assuming you have a User interface defined
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/error-handler";
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +26,7 @@ interface AuthContextType {
     username: string,
     password: string
   ) => Promise<void>;
+  refreshUser: ()=>void;
 }
 
 export const AUTH_TOKEN_KEY = "fitness_auth_token";
@@ -38,8 +40,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const savedToken = localStorage.getItem(AUTH_TOKEN_KEY) || Cookies.get(AUTH_TOKEN_KEY) || null;
-    const savedUser = localStorage.getItem(USER_KEY) || Cookies.get(USER_KEY) || null;
+    const savedToken =
+      localStorage.getItem(AUTH_TOKEN_KEY) ||
+      Cookies.get(AUTH_TOKEN_KEY) ||
+      null;
+    const savedUser =
+      localStorage.getItem(USER_KEY) || Cookies.get(USER_KEY) || null;
     if (savedToken) {
       setToken(savedToken);
       setAuthToken(savedToken);
@@ -49,33 +55,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userData = JSON.parse(savedUser);
         setUser(userData);
       } else {
-        api
-          .get<User>("/users/me/")
-          .then((res) => {
-            setUser(res.data);
-            localStorage.setItem(USER_KEY, JSON.stringify(res.data));
-            Cookies.set(USER_KEY, JSON.stringify(res.data), { expires: 7 }); // Set
-            redirect("/");
-          })
-          // .catch(() => logout());
+        api.get<User>("/users/me/").then((res) => {
+          setUser(res.data);
+          localStorage.setItem(USER_KEY, JSON.stringify(res.data));
+          Cookies.set(USER_KEY, JSON.stringify(res.data), { expires: 7 }); // Set
+          redirect("/");
+        });
+        // .catch(() => logout());
       }
     }
   }, []);
 
-  const signup = async (first_name: string, last_name: string, email: string, username: string, password: string) => {
+  const refreshUser = async () => {
     try {
-      const res = await api.post<{ token: string, user: User }>("/auth/signup/", {
-        first_name,
-        last_name,
-        email,
-        username,
-        password,
-      });
+      const userRes = await api.get("/users/me/");
+      if (userRes.status === 200) {
+        const user = userRes.data;
+        localStorage.setItem("fitness_user", JSON.stringify(user));
+        Cookies.set("fitness_user", JSON.stringify(user), { expires: 7 }); // Set cookie with 7 days expiration
+        setUser(user);
+        console.log("User data updated:", user);
+      } else {
+        setUser(null);
+        localStorage.removeItem("fitness_user");
+        Cookies.remove("fitness_user"); // Remove cookie if user data is not available
+      }
+    } catch (error) {
+      handleApiError(error, "Error refreshing user.")
+    }
+  };
+
+  const signup = async (
+    first_name: string,
+    last_name: string,
+    email: string,
+    username: string,
+    password: string
+  ) => {
+    try {
+      const res = await api.post<{ token: string; user: User }>(
+        "/auth/signup/",
+        {
+          first_name,
+          last_name,
+          email,
+          username,
+          password,
+        }
+      );
       const tok = res.data.token;
       localStorage.setItem(AUTH_TOKEN_KEY, tok);
       Cookies.set(AUTH_TOKEN_KEY, tok, { expires: 7 }); // Set cookie with 7 days expiration
       setAuthToken(tok);
-      
+
       setToken(tok);
       setUser(res.data.user);
       localStorage.setItem(USER_KEY, JSON.stringify(res.data.user));
@@ -84,19 +116,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (err) {
       throw err;
     }
-  }
+  };
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await api.post<{ token: string, user: User }>("/auth/login/", {
-        email,
-        password,
-      });
+      const res = await api.post<{ token: string; user: User }>(
+        "/auth/login/",
+        {
+          email,
+          password,
+        }
+      );
       const tok = res.data.token;
       localStorage.setItem(AUTH_TOKEN_KEY, tok);
       Cookies.set(AUTH_TOKEN_KEY, tok, { expires: 7 }); // Set cookie with 7 days expiration
       setAuthToken(tok);
-      
+
       setToken(tok);
       setUser(res.data.user);
       localStorage.setItem(USER_KEY, JSON.stringify(res.data.user));
@@ -120,7 +155,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated: !!token, login, logout, signup }}
+      value={{ user, token, isAuthenticated: !!token, login, logout, signup, refreshUser }}
     >
       {children}
     </AuthContext.Provider>
