@@ -129,3 +129,18 @@ export interface DailyProgress {
   total_nutrition: number;
   is_rest_day: boolean;
 }
+
+
+export interface DayStats {
+    workouts_completed: number;
+    total_workouts: number;
+    meals_logged: number;
+    total_meals: number;
+    calories_consumed: number;
+    target_calories: number;
+    water_intake: number;
+    target_water: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+}

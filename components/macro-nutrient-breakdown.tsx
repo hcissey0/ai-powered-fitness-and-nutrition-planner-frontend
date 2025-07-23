@@ -18,12 +18,8 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
+import { useData } from "@/context/data-context";
 
-const chartData = [
-  { nutrient: "protein", grams: 120, fill: "var(--color-rose-400)" },
-  { nutrient: "carbs", grams: 250, fill: "var(--color-blue-400)" },
-  { nutrient: "fats", grams: 80, fill: "var(--color-green-400)" },
-];
 
 const chartConfig = {
   grams: {
@@ -44,6 +40,14 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function MacronutrientBreakdown({className}:{className?:string}) {
+  const { todayStats } = useData();
+  
+  const chartData = [
+    { nutrient: "protein", grams: todayStats?.protein || 0, fill: "var(--color-rose-400)" },
+    { nutrient: "carbs", grams: todayStats?.carbs || 0, fill: "var(--color-blue-400)" },
+    { nutrient: "fats", grams: todayStats?.fats || 0, fill: "var(--color-green-400)" },
+  ];
+
   const totalGrams = chartData.reduce((acc, curr) => acc + curr.grams, 0);
 
   return (

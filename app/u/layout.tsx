@@ -30,18 +30,14 @@ export default function DashboardLayout({
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbPage>October 2024</BreadcrumbPage>
+                <BreadcrumbPage>{new Date().toDateString()}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          </div>
-          {/* <div className="flex gap-2 items-center">
-            <NavUser />
-            </div> */}
-          
-          
+          </div>  
+          <ModeToggle /> 
         </header>
-        <div className=" flex flex-1 flex-col gap-4 p-4 max-w-7xl xl:mx-auto">
+        <div className=" flex flex-1 flex-col gap-4 p-4 max-w-7x max-w-[2046px] xl:mx-auto">
             <DataProvider>
             {children}
             </DataProvider>

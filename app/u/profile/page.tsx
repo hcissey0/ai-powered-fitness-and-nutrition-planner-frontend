@@ -147,21 +147,10 @@ export default function ProfilePage() {
     }
   };
 
-  // Show loading state while user data is being fetched
-  if (!user) {
-    return (
-      <div className="min-h-full relative flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-white mt-4">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-full flex justify-center relative">
-      <div className="relative ">
+    <div className="min-h-full flex justify-center w-full">
+      <div className="">
         {/* Profile */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-neon-green bg-clip-text text-transparent">

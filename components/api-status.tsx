@@ -15,6 +15,10 @@ export function ApiStatus({ className }: { className?: string }) {
         checkStatus();
     }, []);
 
+    if (status === true) {
+      return <></>
+    }
+
     return (
       <div className={cn(`flex justify-end z-150 ${className ? "":"fixed top-4 right-4"}`, className)}>
         <div

@@ -44,6 +44,8 @@ import {
   getDailyProgress,
   getPlans,
   deletePlan,
+  deleteWaterTracking,
+  createWaterTracking,
 } from "@/lib/api-service";
 import {
   WorkoutTracking,
@@ -63,6 +65,7 @@ import { rangeIncludesDate } from "react-day-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ExerciseTimer } from "@/components/exercise-timer";
+import { useData } from "@/context/data-context";
 
 
 const dayNames = [
@@ -83,13 +86,21 @@ const mealIcons = {
 };
 
 export default function PlanPage() {
-  const [plans, setPlans] = useState<FitnessPlan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedPlan, setSelectedPlan] = useState<FitnessPlan | null>(null);
+
+  const {
+    todayStats, plans,
+    workoutTracking, mealTracking,
+    dailyProgress, activePlan,
+    refreshTracking, refreshMealTracking,
+    refreshWorkoutTracking, refreshWaterTracking,
+    refreshPlans,
+  } = useData();
+
+
+  
+  const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<FitnessPlan | null>(activePlan);
   const [generatePlanOpen, setGeneratePlanOpen] = useState(false);
-  const [workoutTracking, setWorkoutTracking] = useState<WorkoutTracking[]>([]);
-  const [mealTracking, setMealTracking] = useState<MealTracking[]>([]);
-  const [dailyProgress, setDailyProgress] = useState<DailyProgress[]>([]);
   const [selectedNutritionDay, setSelectedNutritionDay] = useState<number>(new Date().getDay());
   const [waterIntake, setWaterIntake] = useState(2.1);
 
@@ -156,17 +167,10 @@ export default function PlanPage() {
   const fetchAllData = async (initialLoad = false) => {
     if (initialLoad) setLoading(true);
     try {
-      const fetchedPlans = await getPlans();
-      setPlans(fetchedPlans);
 
-      if (fetchedPlans.length > 0) {
+      if (plans.length > 0) {
 
-        const activePlan = fetchedPlans.find((p) => p.is_active)
-
-        setSelectedPlan((prev) => {
-          const planExists = prev && fetchedPlans.some((p) => p.id === prev.id);
-          return planExists ? prev : activePlan ? activePlan :  fetchedPlans[0];
-        });
+        
         setSelectedNutritionDay((prev) => {
           if (prev) return prev;
           if (activePlan) {
@@ -180,7 +184,7 @@ export default function PlanPage() {
         })
 
 
-        const allDates = fetchedPlans.flatMap((p) => [
+        const allDates = plans.flatMap((p) => [
           new Date(p.start_date),
           new Date(p.end_date),
         ]);
@@ -195,18 +199,11 @@ export default function PlanPage() {
           start_date: minDate.toISOString().split("T")[0],
           end_date: maxDate.toISOString().split("T")[0],
         });
-        setDailyProgress(progress.progress);
+     
       } else {
-        setSelectedPlan(null);
-        setDailyProgress([]);
+        // setSelectedPlan(null);
       }
 
-      const [workoutData, mealData] = await Promise.all([
-        getWorkoutTracking(),
-        getMealTracking(),
-      ]);
-      setWorkoutTracking(workoutData);
-      setMealTracking(mealData);
     } catch (error) {
       handleApiError(error, "Data loading failed.");
     } finally {
@@ -215,9 +212,10 @@ export default function PlanPage() {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchAllData(true);
-    }
+    // if (user) {
+    //   fetchAllData(true);
+    // }
+    setSelectedPlan(activePlan)
   }, [user]);
 
   const isToday = (plan: FitnessPlan, day: number): boolean => {
@@ -232,33 +230,56 @@ export default function PlanPage() {
 
   const handleTrackItem = async (
     action: "track" | "untrack",
-    type: "meal" | "workout",
+    type: "meal" | "workout" | "water",
     itemId: number,
     trackingId?: number,
-    sets?: number
+    sets?: number,
+    litres_consumed?: number
   ) => {
     try {
       if (action === "untrack" && trackingId) {
-        if (type === "meal") await deleteMealTracking(trackingId);
-        if (type === "workout") await deleteWorkoutTracking(trackingId);
+        if (type === "meal") {
+          await deleteMealTracking(trackingId);
+          await refreshMealTracking();
+        }
+        if (type === "workout") {
+          await deleteWorkoutTracking(trackingId);
+          await refreshWorkoutTracking();
+        }
+        if (type === "water") {
+          await deleteWaterTracking(trackingId);
+          await refreshWaterTracking();
+        }
       } else if (action === "track") {
         const date = new Date().toISOString().split("T")[0];
-        if (type === "meal")
+        if (type === "meal") {
           await createMealTracking({
             meal: itemId,
             date_completed: date,
             portion_consumed: 1,
             notes: "",
           });
-        if (type === "workout")
-          await createWorkoutTracking({
-            exercise: itemId,
-            date_completed: date,
-            sets_completed: sets || 0,
-            notes: "",
-          });
-      }
-      await fetchAllData(); // Refresh all data
+          await refreshMealTracking();
+        }
+          if (type === "workout") {
+            await createWorkoutTracking({
+              exercise: itemId,
+              date_completed: date,
+              sets_completed: sets || 0,
+              notes: "",
+            });
+            await refreshWorkoutTracking();
+          }
+          if (type === 'water') {
+            await createWaterTracking({
+              date,
+              nutrition_day: itemId,
+              litres_consumed: litres_consumed || 0,
+              notes: ""
+            });
+            await refreshWaterTracking();
+          }
+          }
     } catch (error) {
       handleApiError(error, `Failed to ${action} ${type}.`);
     }
@@ -1359,7 +1380,7 @@ export default function PlanPage() {
         open={generatePlanOpen}
         onClose={() => setGeneratePlanOpen(false)}
         onPlanGenerated={() => {
-          fetchAllData(true);
+          refreshPlans(true);
         }}
       />
     </div>

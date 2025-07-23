@@ -8,7 +8,6 @@ import {
   Home,
   Keyboard,
   LayoutDashboard,
-  Link,
   Lock,
   Menu,
   MessageCircle,
@@ -42,6 +41,7 @@ import { useAuth } from "@/context/auth-context";
 import { User } from "@/interfaces";
 import { ProgressCalendar } from "./progress-calendar";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 // This is sample data.
 const data = {
@@ -91,10 +91,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     asChild
                     isActive={pathname.endsWith(item.url)}
                   >
-                    <a href={item.url}>
+                  <Link className="flex" href={item.url}>
+                    
                       <item.icon />
                       <span>{item.name}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

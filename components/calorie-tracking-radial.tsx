@@ -21,6 +21,7 @@ import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 import { getMealTracking, getPlans } from "@/lib/api-service";
 import { useState, useEffect } from "react";
+import { useData } from "@/context/data-context";
 
 const chartData = [
   {
@@ -53,103 +54,16 @@ interface CalorieData {
 export default function CalorieTrackingRadial({
     className
 }: { className?: string}) {
-    const [chartData, setChartData] = useState<CalorieData[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
+    const { todayStats } = useData();
 
-
-    async function getDailyNutritionTargets(date: string) {
-      const plans = await getPlans();
-      if (!plans) return null;
-      let nutritionDay = null;
-      plans.map((plan)=> {
-          const dayOfWeek = new Date(date).getDay() + 1; // Convert to 1-7 format
-          nutritionDay = plan.nutrition_days.find(
-            (day: any) => day.day_of_week === dayOfWeek
-          );
-
-      })
-
-
-      return nutritionDay || null;
+    const calorieData: CalorieData = {
+      consumed: todayStats?.calories_consumed || 0,
+      target: todayStats?.target_calories || 0,
+      fill: "var(--color-primary)"
     }
 
-    useEffect(() => {
-      async function fetchCalorieData() {
-        try {
-          setLoading(true);
-          const today = new Date().toISOString().split("T")[0];
-
-          // Get today's meal tracking data
-          const mealData = await getMealTracking(today);
-
-          // Get nutrition targets for today
-          const nutritionTargets = await getDailyNutritionTargets(today);
-
-          // Calculate consumed calories
-          const consumedCalories = mealData.reduce(
-            (total: number, meal: any) => {
-              return total + meal.meal.calories * meal.portion_consumed;
-            },
-            0
-          );
-
-          // Get target calories
-          const targetCalories = nutritionTargets?.target_calories || 2200;
-
-          setChartData([
-            {
-              consumed: Math.round(consumedCalories),
-              target: targetCalories,
-              fill: "var(--color-calories)",
-            },
-          ]);
-        } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "Failed to fetch calorie data"
-          );
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      fetchCalorieData();
-    }, []);
-
-    if (loading) {
-      return (
-        <Card className="flex flex-col">
-          <CardHeader className="items-center pb-0">
-            <CardTitle>Daily Calorie Goal</CardTitle>
-            <CardDescription>Loading...</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 pb-0">
-            <div className="mx-auto aspect-square max-h-[250px] flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    if (error) {
-      return (
-        <Card className="flex flex-col">
-          <CardHeader className="items-center pb-0">
-            <CardTitle>Daily Calorie Goal</CardTitle>
-            <CardDescription>Error loading data</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 pb-0">
-            <div className="mx-auto aspect-square max-h-[250px] flex items-center justify-center text-muted-foreground">
-              {error}
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    const data = chartData[0];
+    const data = calorieData;
     const percentage = Math.round((data.consumed / data.target) * 100);
     const remaining = data.target - data.consumed;
   return (
@@ -164,7 +78,7 @@ export default function CalorieTrackingRadial({
           className="mx-auto aspect-square h-[250px]"
         >
           <RadialBarChart
-            data={[{ ...chartData[0], consumed: percentage }]}
+            data={[{ ...calorieData, consumed: percentage }]}
             startAngle={0}
             endAngle={percentage * 3.6}
             innerRadius={80}
@@ -225,8 +139,8 @@ export default function CalorieTrackingRadial({
           <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          {chartData[0].consumed.toLocaleString()} /{" "}
-          {chartData[0].target.toLocaleString()} calories
+          {calorieData.consumed.toLocaleString()} /{" "}
+          {calorieData.target.toLocaleString()} calories
         </div>
       </CardFooter>
     </Card>
