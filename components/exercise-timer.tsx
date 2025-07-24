@@ -60,7 +60,7 @@ function TimerToastContent({
   };
 
   return (
-    <div className="border p-4 flex items-center justify-between w-full">
+    <div className="p-4 flex items-center justify-between w-full">
       <div className="flex flex-col">
         <div className="font-semibold text-sm mb-1">
           {exerciseName} Rest Timer

@@ -54,7 +54,7 @@ import {
   DailyProgress,
 } from "@/interfaces";
 import { GeneratePlanDialog } from "@/components/generate-plan-dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import { handleApiError } from "@/lib/error-handler";
@@ -90,10 +90,11 @@ export default function PlanPage() {
   const {
     todayStats, plans,
     workoutTracking, mealTracking,
+    waterTracking,
     dailyProgress, activePlan,
-    refreshTracking, refreshMealTracking,
-    refreshWorkoutTracking, refreshWaterTracking,
-    refreshPlans,
+    refresh, removePlan,
+
+    track,
   } = useData();
 
 
@@ -107,15 +108,22 @@ export default function PlanPage() {
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [selectedWorkoutDay, setSelectedWorkoutDay] = useState<number>(new Date().getDay());
+
   
   
   const { user } = useAuth();
   
-  // Nutrition variables
-  const currentNutrition = selectedPlan?.nutrition_days.find((n) => 
-  n.day_of_week === selectedNutritionDay);
+  useEffect(() => {
+    setWaterIntake(selectedPlan?.nutrition_days.find((nd) => nd.day_of_week === selectedNutritionDay)?.target_water_litres || 0)
+  }, [selectedNutritionDay])
   
-  const consumedNutrients = currentNutrition?.meals
+  const currentNutrition = useMemo(() => selectedPlan?.nutrition_days.find((n) => n.day_of_week === selectedNutritionDay) || null, [selectedPlan, selectedNutritionDay])
+  const currentWorkout = useMemo(() => selectedPlan?.workout_days.find((w) => w.day_of_week === selectedWorkoutDay) || null, [selectedPlan, selectedWorkoutDay])
+
+  
+  const selectedDayStats = useMemo(() => {
+    // Nutrition
+    const consumedNutrients = currentNutrition?.meals
   .filter((meal) => mealTracking.find((mt)=>mt.meal === meal.id))
   .reduce((acc, meal) => ({
     calories: acc.calories + meal.calories,
@@ -125,97 +133,59 @@ export default function PlanPage() {
   }), {calories:0, protein:0, carbs:0, fats:0}) ||
   {calories:0, protein:0, carbs:0, fats:0};
 
-  const loggedMeals = currentNutrition?.meals.filter(
-    (meal)=>mealTracking.find((mt)=>mt.meal===meal.id)).length;
-    
-    // Workout variables
-    const currentWorkout = selectedPlan?.workout_days.find((n) => 
-    n.day_of_week === selectedWorkoutDay);
+  const loggedMeals =
+    currentNutrition?.meals.filter((m) =>
+      mealTracking.find((mt) => mt.meal === m.id)
+    ).length || 0;
 
-  const completedToday = currentWorkout?.exercises
-  .filter((e) => workoutTracking.find((wt) => wt.exercise === e.id)).length;
-  // const completedExercises = workoutTracking.length;
+    const totalMeals = currentNutrition?.meals.length || 0;
 
+    // Water
+    const waterIntake = waterTracking.filter((w) => w.nutrition_day === currentNutrition?.id).reduce((a, w)=> w.litres_consumed + a, 0) || 0;
+    const waterTarget = currentNutrition?.target_water_litres || 0;
+
+
+  // Workout
+  const completedToday =
+    currentWorkout?.exercises.filter((e) =>
+      workoutTracking.find((wt) => wt.exercise === e.id)
+  ).length || 0;
+  
   const totalToday = currentWorkout?.exercises.length || 0;
 
-  const startTimer = (exerciseName: string, seconds: number) => {
-    setActiveTimer(exerciseName);
-    setTimerSeconds(seconds);
+  const totalWeek = selectedPlan?.workout_days.reduce((a, w) => a + w.exercises.length, 0);
+  const completedWeek = selectedPlan?.workout_days.reduce((a, w) => a + w.exercises.filter((e) => workoutTracking.find((wt) => wt.exercise === e.id)).length, 0);
+  const streak = selectedPlan?.workout_days.reduce((a, w) => a + (w.exercises.filter((e) => workoutTracking.find((wt) => wt.exercise === e.id)).length > 0 ? 1 : 0), 0)
 
-    const interval = setInterval(() => {
-      setTimerSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setActiveTimer(null);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  const addWater = () => {
-    setWaterIntake((prev) => Math.min(prev + 0.25, 5))
-  }
-
-  const fetchAllData = async (initialLoad = false) => {
-    if (initialLoad) setLoading(true);
-    try {
-
-      if (plans.length > 0) {
-
-        
-        setSelectedNutritionDay((prev) => {
-          if (prev) return prev;
-          if (activePlan) {
-
-            const today = new Date()
-            const planStart = new Date(activePlan.start_date);
-            return Math.max(1, Math.min(7, today.getDate() - planStart.getDate()))
-          }
-        return 1;
-
-        })
-
-
-        const allDates = plans.flatMap((p) => [
-          new Date(p.start_date),
-          new Date(p.end_date),
-        ]);
-        const minDate = new Date(
-          Math.min(...allDates.map((date) => new Date(date).getTime()))
-        );
-        const maxDate = new Date(
-          Math.max(...allDates.map((date) => new Date(date).getTime()))
-        );
-
-        const progress = await getDailyProgress({
-          start_date: minDate.toISOString().split("T")[0],
-          end_date: maxDate.toISOString().split("T")[0],
-        });
-     
-      } else {
-        // setSelectedPlan(null);
+    return {
+      nutrition: {
+        consumedNutrients,
+        loggedMeals,
+        totalMeals,
+        waterIntake,
+        waterTarget
+      },
+      workout: {
+        completedToday,
+        totalToday,
+        completedWeek,
+        totalWeek,
+        streak,
       }
-
-    } catch (error) {
-      handleApiError(error, "Data loading failed.");
-    } finally {
-      if (initialLoad) setLoading(false);
     }
-  };
+  }, [currentNutrition, currentWorkout, mealTracking, waterTracking, workoutTracking])
+
+
+  const addWater = async (itemId:number) => {
+    await track('track', 'water', itemId,undefined,undefined,0.25)
+  }
+
 
   useEffect(() => {
-    // if (user) {
-    //   fetchAllData(true);
-    // }
-    setSelectedPlan(activePlan)
+
+    if (activePlan) setSelectedPlan(activePlan);
+    else setSelectedPlan(plans[0]);
+
   }, [user]);
 
   const isToday = (plan: FitnessPlan, day: number): boolean => {
@@ -236,65 +206,21 @@ export default function PlanPage() {
     sets?: number,
     litres_consumed?: number
   ) => {
-    try {
-      if (action === "untrack" && trackingId) {
-        if (type === "meal") {
-          await deleteMealTracking(trackingId);
-          await refreshMealTracking();
-        }
-        if (type === "workout") {
-          await deleteWorkoutTracking(trackingId);
-          await refreshWorkoutTracking();
-        }
-        if (type === "water") {
-          await deleteWaterTracking(trackingId);
-          await refreshWaterTracking();
-        }
-      } else if (action === "track") {
-        const date = new Date().toISOString().split("T")[0];
-        if (type === "meal") {
-          await createMealTracking({
-            meal: itemId,
-            date_completed: date,
-            portion_consumed: 1,
-            notes: "",
-          });
-          await refreshMealTracking();
-        }
-          if (type === "workout") {
-            await createWorkoutTracking({
-              exercise: itemId,
-              date_completed: date,
-              sets_completed: sets || 0,
-              notes: "",
-            });
-            await refreshWorkoutTracking();
-          }
-          if (type === 'water') {
-            await createWaterTracking({
-              date,
-              nutrition_day: itemId,
-              litres_consumed: litres_consumed || 0,
-              notes: ""
-            });
-            await refreshWaterTracking();
-          }
-          }
-    } catch (error) {
-      handleApiError(error, `Failed to ${action} ${type}.`);
-    }
+    await track(action, type, itemId, trackingId, sets, litres_consumed)
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-full relative flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-white mt-4">Loading Plans...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleDeletePlan = async () => {
+    if (selectedPlan) {
+
+      try {
+        await removePlan(selectedPlan.id, false, true);
+        setSelectedPlan(activePlan || null)
+      } catch (error) {
+        handleApiError(error, "Failed to delete plan.");
+      }
+    }
+    };
+
 
   return (
     <div>
@@ -386,15 +312,7 @@ export default function PlanPage() {
               {/* Delete Selected Plan */}
               {selectedPlan && (
                 <Button
-                  onClick={async () => {
-                    try {
-                      await deletePlan(selectedPlan.id);
-                      toast.success("Plan deleted.");
-                      await fetchAllData(true);
-                    } catch (error) {
-                      handleApiError(error, "Failed to delete plan.");
-                    }
-                  }}
+                  onClick={handleDeletePlan}
                   variant="destructive"
                   className="mb-4"
                 >
@@ -493,7 +411,7 @@ export default function PlanPage() {
                                   variant="secondary"
                                   className="bg-green-100 text-green-800"
                                 >
-                                  {loggedMeals}/{currentNutrition.meals.length}{" "}
+                                  {selectedDayStats.nutrition.loggedMeals}/{selectedDayStats.nutrition.totalMeals}{" "}
                                   Logged
                                 </Badge>
                               </CardTitle>
@@ -502,8 +420,8 @@ export default function PlanPage() {
                               </CardDescription>
                               <Progress
                                 value={
-                                  (loggedMeals /
-                                    currentNutrition.meals.length) *
+                                  (selectedDayStats.nutrition.loggedMeals /
+                                    selectedDayStats.nutrition.totalMeals) *
                                   100
                                 }
                                 className="h-2"
@@ -664,13 +582,13 @@ export default function PlanPage() {
                                 <div className="flex justify-between text-sm mb-2">
                                   <span>Calories</span>
                                   <span>
-                                    {consumedNutrients.calories}/
+                                    {selectedDayStats.nutrition.consumedNutrients.calories}/
                                     {currentNutrition?.target_calories}
                                   </span>
                                 </div>
                                 <Progress
                                   value={
-                                    (consumedNutrients.calories /
+                                    (selectedDayStats.nutrition.consumedNutrients.calories /
                                       currentNutrition.target_calories!) *
                                     100
                                   }
@@ -681,13 +599,13 @@ export default function PlanPage() {
                                 <div className="flex justify-between text-sm mb-2">
                                   <span>Protein</span>
                                   <span>
-                                    {consumedNutrients.protein}g/
+                                    {selectedDayStats.nutrition.consumedNutrients.protein}g/
                                     {currentNutrition.target_protein_grams}g
                                   </span>
                                 </div>
                                 <Progress
                                   value={
-                                    (consumedNutrients.protein /
+                                    (selectedDayStats.nutrition.consumedNutrients.protein /
                                       currentNutrition.target_protein_grams!) *
                                     100
                                   }
@@ -698,13 +616,13 @@ export default function PlanPage() {
                                 <div className="flex justify-between text-sm mb-2">
                                   <span>Carbs</span>
                                   <span>
-                                    {consumedNutrients.carbs}g/
+                                    {selectedDayStats.nutrition.consumedNutrients.carbs}g/
                                     {currentNutrition.target_carbs_grams}g
                                   </span>
                                 </div>
                                 <Progress
                                   value={
-                                    (consumedNutrients.carbs /
+                                    (selectedDayStats.nutrition.consumedNutrients.carbs /
                                       currentNutrition.target_carbs_grams!) *
                                     100
                                   }
@@ -715,13 +633,13 @@ export default function PlanPage() {
                                 <div className="flex justify-between text-sm mb-2">
                                   <span>Fats</span>
                                   <span>
-                                    {consumedNutrients.fats}g/
+                                    {selectedDayStats.nutrition.consumedNutrients.fats}g/
                                     {currentNutrition.target_fats_grams}g
                                   </span>
                                 </div>
                                 <Progress
                                   value={
-                                    (consumedNutrients.fats /
+                                    (selectedDayStats.nutrition.consumedNutrients.fats /
                                       currentNutrition.target_fats_grams!) *
                                     100
                                   }
@@ -742,30 +660,30 @@ export default function PlanPage() {
                             <CardContent className="space-y-4">
                               <div className="text-center">
                                 <div className="text-3xl font-bold text-blue-600">
-                                  {waterIntake}L
+                                  {selectedDayStats.nutrition.waterIntake}L
                                 </div>
-                                <div className="text-sm text-gray-600">
-                                  of 3.0L target
+                                <div className="text-sm ">
+                                  of {selectedDayStats.nutrition.waterTarget}L target
                                 </div>
                               </div>
                               <Progress
-                                value={(waterIntake / 3.0) * 100}
+                                value={(selectedDayStats.nutrition.waterIntake / selectedDayStats.nutrition.waterTarget) * 100}
                                 className="h-3"
                               />
                               <Button
-                                onClick={addWater}
-                                className="w-full bg-blue-600 hover:bg-blue-700"
-                                disabled={waterIntake >= 3.0}
+                                onClick={()=> addWater(currentNutrition?.id)}
+                                className="w-full text-white bg-blue-600 hover:bg-blue-700"
+                                disabled={selectedDayStats.nutrition.waterIntake >= selectedDayStats.nutrition.waterTarget}
                               >
                                 <Droplets className="h-4 w-4 mr-2" />
                                 Add 250ml
                               </Button>
                               <div className="grid grid-cols-4 gap-1">
-                                {Array.from({ length: 12 }, (_, i) => (
+                                {Array.from({ length: Math.round(selectedDayStats.nutrition.waterTarget / 0.25) }, (_, i) => (
                                   <div
                                     key={i}
                                     className={`h-6 rounded ${
-                                      i < waterIntake * 4
+                                      i < selectedDayStats.nutrition.waterIntake * 4
                                         ? "bg-blue-500"
                                         : "bg-gray-200"
                                     }`}
@@ -1014,13 +932,13 @@ export default function PlanPage() {
                                     variant="secondary"
                                     className="bg-green-100 text-green-800"
                                   >
-                                    {completedToday}/{totalToday} Complete
+                                    {selectedDayStats.workout.completedToday}/{selectedDayStats.workout.totalToday} Complete
                                   </Badge>
                                 )}
                               </div>
                               {!currentWorkout.is_rest_day && (
                                 <Progress
-                                  value={(completedToday / totalToday) * 100}
+                                  value={(selectedDayStats.workout.completedToday / selectedDayStats.workout.totalToday) * 100}
                                   className="h-2"
                                 />
                               )}
@@ -1194,20 +1112,20 @@ export default function PlanPage() {
                             <CardContent className="space-y-4">
                               <div className="text-center">
                                 <div className="text-3xl font-bold text-green-600">
-                                  {completedToday}
+                                  {selectedDayStats.workout.completedToday}
                                 </div>
                                 <div className="text-sm text-white">
-                                  of {totalToday} exercises
+                                  of {selectedDayStats.workout.totalToday} exercises
                                 </div>
                               </div>
                               {!currentWorkout.is_rest_day && (
                                 <Progress
-                                  value={(completedToday / totalToday) * 100}
+                                  value={(selectedDayStats.workout.completedToday / selectedDayStats.workout.totalToday) * 100}
                                   className="h-3"
                                 />
                               )}
-                              {completedToday === totalToday &&
-                                totalToday > 0 && (
+                              {selectedDayStats.workout.completedToday === selectedDayStats.workout.totalToday &&
+                                selectedDayStats.workout.totalToday > 0 && (
                                   <div className="text-center p-4 rounded-lg animate-pulse">
                                     <Trophy className="h-8 w-8 text-green-400 mx-auto mb-2" />
                                     <p className="text-sm font-semibold text-green-400">
@@ -1230,7 +1148,7 @@ export default function PlanPage() {
                                   This Week
                                 </span>
                                 <span className="text-sm font-semibold">
-                                  3/5 workouts
+                                  {selectedDayStats.workout.completedWeek}/{selectedDayStats.workout.totalWeek} workouts
                                 </span>
                               </div>
                               <div className="flex justify-between">
@@ -1238,7 +1156,7 @@ export default function PlanPage() {
                                   Streak
                                 </span>
                                 <span className="text-sm font-semibold">
-                                  7 days
+                                  {selectedDayStats.workout.streak} day(s)
                                 </span>
                               </div>
                               <div className="flex justify-between">
@@ -1246,7 +1164,7 @@ export default function PlanPage() {
                                   Total Exercises
                                 </span>
                                 <span className="text-sm font-semibold">
-                                  156
+                                  {selectedDayStats.workout.totalWeek}
                                 </span>
                               </div>
                             </CardContent>
@@ -1380,7 +1298,7 @@ export default function PlanPage() {
         open={generatePlanOpen}
         onClose={() => setGeneratePlanOpen(false)}
         onPlanGenerated={() => {
-          refreshPlans(true);
+          
         }}
       />
     </div>

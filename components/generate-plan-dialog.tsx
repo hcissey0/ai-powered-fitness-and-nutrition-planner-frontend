@@ -30,6 +30,7 @@ import {
   TrendingUp,
   Loader2,
 } from "lucide-react";
+import { useData } from "@/context/data-context";
 
 interface GeneratePlanDialogProps {
   open: boolean;
@@ -95,7 +96,8 @@ export function GeneratePlanDialog({
   onClose,
   onPlanGenerated,
 }: GeneratePlanDialogProps) {
-  const [plans, setPlans] = useState<FitnessPlan[]>([]);
+  // const [plans, setPlans] = useState<FitnessPlan[]>([]);
+  const { plans, refresh, createPlan } = useData();
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
     to: addDays(new Date(), 6), // Default to a 7-day plan
@@ -129,20 +131,6 @@ export function GeneratePlanDialog({
     }
   }, [isLoading]);
 
-  useEffect(() => {
-    if (open) {
-      const fetchPlans = async () => {
-        try {
-          const fetchedPlans = await getPlans();
-          setPlans(fetchedPlans);
-        } catch (error) {
-          handleApiError(error, "Could not load existing plans.");
-        }
-      };
-      fetchPlans();
-    }
-  }, [open]);
-
   const disabledDates = plans.flatMap((plan) => {
     const dates = [];
     const startDate = new Date(plan.start_date);
@@ -171,15 +159,13 @@ export function GeneratePlanDialog({
 
     setIsLoading(true);
     try {
-      toast.info("Generating Plan. This may take a while...");
-      await generatePlan({
-        start_date: selectedWeek.from.toISOString(),
-      });
-      toast.success("New plan generated successfully!");
-      onPlanGenerated();
-      onClose();
+    // toast.info("Generating Plan. This may take a while...");
+    await createPlan(selectedWeek.from.toISOString())
+    toast.success("New plan generated successfully!");
+    onPlanGenerated();
+    onClose();
     } catch (error) {
-      handleApiError(error, "Failed to generate plan.");
+      // handleApiError(error, "Failed to generate plan.");
     } finally {
       setIsLoading(false);
     }
