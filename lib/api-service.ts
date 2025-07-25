@@ -1,4 +1,4 @@
-import { FitnessPlan, Profile, WorkoutTracking, MealTracking, DailyProgress, WaterTracking } from "@/interfaces";
+import { FitnessPlan, Profile, WorkoutTracking, MealTracking, Progress, WaterTracking } from "@/interfaces";
 import { api } from "@/lib/axios";
 
 export const createProfile = async (
@@ -121,11 +121,11 @@ export const deleteWaterTracking = async (trackingId: number): Promise<void> => 
 }
 
 // Daily Progress API function
-export const getDailyProgress = async (
+export const getProgress = async (
   params: { date?: string; start_date?: string; end_date?: string } = {}
-): Promise<{ progress: DailyProgress[] }> => {
+): Promise<{ progress: Progress[] }> => {
   console.log("Fetching daily progress with params:", params);
-  const response = await api.get<{ progress: DailyProgress[] }>("/users/me/daily-progress/", { params });
+  const response = await api.get<{ progress: Progress[] }>("/users/me/progress/", { params });
   return response.data;
 };
 

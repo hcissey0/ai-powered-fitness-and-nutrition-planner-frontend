@@ -2,7 +2,7 @@
 "use client";
 
 import {
-  DailyProgress,
+  Progress,
   FitnessPlan,
   MealTracking,
   WaterTracking,
@@ -30,7 +30,7 @@ import {
   deleteWaterTracking,
   deleteWorkoutTracking,
   generatePlan,
-  getDailyProgress,
+  getProgress,
   getMealTracking,
   getPlans,
   getWaterTracking,
@@ -40,8 +40,8 @@ import {
 interface DataContextType {
   plans: FitnessPlan[];
   activePlan: FitnessPlan | null;
-  dailyProgress: DailyProgress[];
-  weeklyProgress: DailyProgress[];
+  progress: Progress[];
+  weeklyProgress: Progress[];
   workoutTracking: WorkoutTracking[];
   mealTracking: MealTracking[];
   waterTracking: WaterTracking[];
@@ -73,7 +73,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     // States
   const [plans, setPlans] = useState<FitnessPlan[]>([]);
-  const [dailyProgress, setDailyProgress] = useState<DailyProgress[]>([]);
+  const [progress, setProgress] = useState<Progress[]>([]);
   const [workoutTracking, setWorkoutTracking] = useState<WorkoutTracking[]>([]);
   const [mealTracking, setMealTracking] = useState<MealTracking[]>([]);
   const [waterTracking, setWaterTracking] = useState<WaterTracking[]>([]);
@@ -83,7 +83,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   const today = new Date();
 
-function getCurrentWeekProgress(data: DailyProgress[]): DailyProgress[] {
+function getCurrentWeekProgress(data: Progress[]): Progress[] {
 
   const day = today.getDay();
   const diffToMonday = (day === 0 ? -6 : 1) - day;
@@ -105,7 +105,7 @@ function getCurrentWeekProgress(data: DailyProgress[]): DailyProgress[] {
 
   // Memos
   const activePlan: FitnessPlan | null = useMemo(()=>plans.find((p)=>p.is_active)||null,[plans])
-  const weeklyProgress = useMemo(() => getCurrentWeekProgress(dailyProgress), [dailyProgress])
+  const weeklyProgress = useMemo(() => getCurrentWeekProgress(progress), [progress])
 
   const todayNutrition: NutritionDay | null = useMemo(() =>
     activePlan?.nutrition_days.find((nd) => nd.day_of_week === today.getDay()) || null,
@@ -184,8 +184,8 @@ function getCurrentWeekProgress(data: DailyProgress[]): DailyProgress[] {
                 setPlans(plans);
                 break;
             case "daily-progress":
-                const dailyProgress = await getDailyProgress();
-                setDailyProgress(dailyProgress.progress);
+                const progress = await getProgress();
+                setProgress(progress.progress);
                 break;
             case "workout-tracking":
                 const workoutTracking = await getWorkoutTracking();
@@ -201,12 +201,12 @@ function getCurrentWeekProgress(data: DailyProgress[]): DailyProgress[] {
                 break;
             case "all-data":
                 const plansData = await getPlans();
-                const dailyProgressData = await getDailyProgress();
+                const progressData = await getProgress();
                 const mealTrackingData = await getMealTracking();
                 const workoutTrackingData = await getWorkoutTracking();
                 const waterTrackingData = await getWaterTracking();
                 setPlans(plansData);
-                setDailyProgress(dailyProgressData.progress);
+                setProgress(progressData.progress);
                 setMealTracking(mealTrackingData);
                 setWorkoutTracking(workoutTrackingData);
                 setWaterTracking(waterTrackingData);
@@ -329,7 +329,7 @@ function getCurrentWeekProgress(data: DailyProgress[]): DailyProgress[] {
         track,
         todayNutrition,
         todayWorkout,
-        dailyProgress,
+        progress,
         weeklyProgress,
         workoutTracking,
         mealTracking,

@@ -34,24 +34,11 @@ import {
   Timer,
   Trophy,
 } from "lucide-react";
-import {
-  getWorkoutTracking,
-  getMealTracking,
-  deleteWorkoutTracking,
-  deleteMealTracking,
-  createWorkoutTracking,
-  createMealTracking,
-  getDailyProgress,
-  getPlans,
-  deletePlan,
-  deleteWaterTracking,
-  createWaterTracking,
-} from "@/lib/api-service";
+
 import {
   WorkoutTracking,
   MealTracking,
   FitnessPlan,
-  DailyProgress,
 } from "@/interfaces";
 import { GeneratePlanDialog } from "@/components/generate-plan-dialog";
 import { useEffect, useMemo, useState } from "react";
@@ -91,7 +78,7 @@ export default function PlanPage() {
     todayStats, plans,
     workoutTracking, mealTracking,
     waterTracking,
-    dailyProgress, activePlan,
+    progress, activePlan,
     refresh, removePlan,
 
     track,
@@ -251,10 +238,6 @@ export default function PlanPage() {
                 </Button>
               </div>
 
-              {/* <ProgressCalendar
-                className="mb-6"
-                initialProgress={dailyProgress}
-              /> */}
 
               {plans.length > 0 && (
                 <div className="mb-4">

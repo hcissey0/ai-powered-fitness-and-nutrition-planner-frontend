@@ -120,7 +120,7 @@ export interface WaterTracking {
   created_at: string;
 }
 
-export interface DailyProgress {
+export interface Progress {
   date: string;
   day_of_week: number;
   workout_progress: number;

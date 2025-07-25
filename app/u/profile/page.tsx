@@ -39,7 +39,6 @@ import {
   getProfile,
   updateProfile,
   updateUser,
-  getDailyProgress,
 } from "@/lib/api-service";
 import { Profile } from "@/interfaces";
 import { useAuth } from "@/context/auth-context";

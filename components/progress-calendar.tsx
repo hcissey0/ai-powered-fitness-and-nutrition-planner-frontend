@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDailyProgress } from "@/lib/api-service";
-import { DailyProgress } from "@/interfaces";
+import { Progress } from "@/interfaces";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { handleApiError } from "@/lib/error-handler";
@@ -14,19 +13,19 @@ import { useData } from "@/context/data-context";
 
 interface ProgressCalendarProps {
   className?: string;
-  initialProgress?: DailyProgress[];
+  initialProgress?: Progress[];
 }
 
 interface CalendarDay {
   date: Date;
   isCurrentMonth: boolean;
   isToday: boolean;
-  progress?: DailyProgress;
+  progress?: Progress;
 }
 
 export function ProgressCalendar({ className, initialProgress }: ProgressCalendarProps) {
 
-  const { dailyProgress, refresh } = useData();
+  const { progress, refresh } = useData();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
 
@@ -48,13 +47,13 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
     
     return days.map(date => {
       const dateStr = format(date, 'yyyy-MM-dd');
-      const progress = dailyProgress.find(p => p.date === dateStr);
+      const progressData = progress.find(p => p.date === dateStr);
       
       return {
         date,
         isCurrentMonth: isSameMonth(date, currentMonth),
         isToday: isSameDay(date, new Date()),
-        progress,
+        progress: progressData,
       };
     });
   };

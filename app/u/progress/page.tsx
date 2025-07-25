@@ -1,8 +1,6 @@
 "use client";
 import { ProgressCalendar } from "@/components/progress-calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDailyProgress } from "@/lib/api-service";
-import { DailyProgress } from "@/interfaces";
 import React from "react";
 import {
   LineChart,
@@ -14,21 +12,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useData } from "@/context/data-context";
 
 export default function ProgressPage() {
-  const [progress, setProgress] = React.useState<DailyProgress[]>([]);
-
-  React.useEffect(() => {
-    const fetchProgress = async () => {
-      try {
-        const progressData = await getDailyProgress();
-        setProgress(progressData.progress);
-      } catch (error) {
-        console.error("Failed to fetch progress", error);
-      }
-    };
-    fetchProgress();
-  }, []);
+  const { progress } = useData();
 
   return (
     <div className="space-y-4">
