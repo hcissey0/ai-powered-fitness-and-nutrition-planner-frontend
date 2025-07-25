@@ -41,6 +41,7 @@ interface DataContextType {
   plans: FitnessPlan[];
   activePlan: FitnessPlan | null;
   dailyProgress: DailyProgress[];
+  weeklyProgress: DailyProgress[];
   workoutTracking: WorkoutTracking[];
   mealTracking: MealTracking[];
   waterTracking: WaterTracking[];
@@ -82,8 +83,29 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   const today = new Date();
 
+function getCurrentWeekProgress(data: DailyProgress[]): DailyProgress[] {
+
+  const day = today.getDay();
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  return data.filter((entry) => {
+    const entryDate = new Date(entry.date);
+    return entryDate >= monday && entryDate <= sunday;
+  });
+}
+
+
   // Memos
   const activePlan: FitnessPlan | null = useMemo(()=>plans.find((p)=>p.is_active)||null,[plans])
+  const weeklyProgress = useMemo(() => getCurrentWeekProgress(dailyProgress), [dailyProgress])
 
   const todayNutrition: NutritionDay | null = useMemo(() =>
     activePlan?.nutrition_days.find((nd) => nd.day_of_week === today.getDay()) || null,
@@ -144,7 +166,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     setDataLoading(true);
     try {
-      await refresh('all-data')
+      await refresh('all-data', false, true)
     } catch (error) {
       setDataLoaded(false);
       handleApiError(error, "Error fetching data");
@@ -280,6 +302,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           // await refreshWaterTracking();
         }
       }
+      await refresh('daily-progress');
     } catch (error) {
       handleApiError(error, `Failed to ${action} ${type}.`);
       throw error;
@@ -307,6 +330,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         todayNutrition,
         todayWorkout,
         dailyProgress,
+        weeklyProgress,
         workoutTracking,
         mealTracking,
         dataLoading,

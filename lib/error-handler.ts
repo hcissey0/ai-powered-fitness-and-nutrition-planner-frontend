@@ -11,6 +11,9 @@ export const handleApiError = (
     console.error("API Error:", responseData);
     if (responseData && typeof responseData.detail === 'string') {
       errorMessage = responseData.detail;
+      // if (errorMessage === 'Invalid token.') {
+      //   errorMessage = 'Your session has expired. Please log in again.';
+      // }
     } else if (responseData && typeof responseData.message === 'string') {
         errorMessage = responseData.message;
     } else if (typeof responseData === 'string' && responseData.length > 0 && responseData.length < 200) {

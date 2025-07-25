@@ -127,6 +127,8 @@ export interface DailyProgress {
   total_workout: number;
   nutrition_progress: number;
   total_nutrition: number;
+  water_progress: number;
+  total_water: number;
   is_rest_day: boolean;
 }
 

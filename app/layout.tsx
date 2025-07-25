@@ -44,7 +44,7 @@ export default function RootLayout({
         className={`${spaceMono.className} ${spaceMono.variable} antialiased`}
       >
         <ApiStatus />
-        <AnimatedBackground />
+        {/* <AnimatedBackground /> */}
         <AuthProvider>
 
         <ThemeProvider

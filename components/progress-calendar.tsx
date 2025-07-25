@@ -9,6 +9,7 @@ import { DailyProgress } from "@/interfaces";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { handleApiError } from "@/lib/error-handler";
+import { useData } from "@/context/data-context";
 
 
 interface ProgressCalendarProps {
@@ -24,47 +25,17 @@ interface CalendarDay {
 }
 
 export function ProgressCalendar({ className, initialProgress }: ProgressCalendarProps) {
+
+  const { dailyProgress, refresh } = useData();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [progressData, setProgressData] = useState<DailyProgress[]>(initialProgress || []);
-  const [isLoading, setIsLoading] = useState(!initialProgress);
 
-  const fetchProgressData = async (month: Date) => {
-    setIsLoading(true);
-    try {
-      const start = format(startOfMonth(month), 'yyyy-MM-dd');
-      const end = format(endOfMonth(month), 'yyyy-MM-dd');
-      
-      const response = await getDailyProgress({
-        start_date: start,
-        end_date: end,
-      });
-      
-      setProgressData(response.progress);
-    } catch (error) {
-      // console.error("Failed to fetch progress data:", error);
-      handleApiError(error, "Failed to fetch progress data.")
-      setProgressData([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // If initialProgress is not provided, fetch the data
-    if (!initialProgress) {
-      fetchProgressData(currentMonth);
-    } else {
-      // If initialProgress is provided, use it
-      setProgressData(initialProgress);
-    }
-  }, [currentMonth, initialProgress]);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newMonth = direction === 'prev' 
       ? subMonths(currentMonth, 1) 
       : addMonths(currentMonth, 1);
     setCurrentMonth(newMonth);
-    fetchProgressData(newMonth);
+    refresh('daily-progress');
   };
 
   const generateCalendarDays = (): CalendarDay[] => {
@@ -77,7 +48,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
     
     return days.map(date => {
       const dateStr = format(date, 'yyyy-MM-dd');
-      const progress = progressData.find(p => p.date === dateStr);
+      const progress = dailyProgress.find(p => p.date === dateStr);
       
       return {
         date,
@@ -101,7 +72,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
   );
 
   return (
-    <div className={cn("glass rounded-xl max-w-3xl p-3", className)}>
+    <div className={cn("glass rounded-xl max- p-3", className)}>
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between text-lg text-white">
           <div className="flex items-center gap-2">
@@ -132,11 +103,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
-          </div>
-        ) : (
+        
           <div className="space-y-2">
             {/* Week day headers */}
             <div className="grid grid-cols-7 gap-1 mb-2">
@@ -166,7 +133,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
                 >
                   {/* Date number */}
                   <div className={`
-                    text-xs font-medium sm:mb-2
+                    text-xs font-medium sm:mb-1 xl:mb-2
                     ${day.isCurrentMonth 
                       ? day.isToday 
                         ? 'text-primary-300' 
@@ -179,13 +146,17 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
                   
                   {/* Progress bars */}
                   {day.progress && day.isCurrentMonth && (
-                    <div className="space-y-1 sm:space-y-2">
+                    <div className="space-y- sm:space-y-1 xl:space-y-2">
                       {/* Nutrition progress (blue, top) */}
                       <ProgressBar 
                         value={day.progress.nutrition_progress} 
-                        color="text-blue-400" 
+                        color="text-green-400" 
                       />
                       {/* Workout progress (red, bottom) */}
+                      <ProgressBar 
+                        value={day.progress.water_progress} 
+                        color="text-blue-400" 
+                      />
                       <ProgressBar 
                         value={day.progress.workout_progress} 
                         color="text-red-400" 
@@ -206,8 +177,12 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
             {/* Legend */}
             <div className="flex text-xs md:text-lg items-center justify-center gap-4 mt-4 pt-4 border-t border-white/10">
               <div className="flex items-center gap-2 ">
-                <div className="w-3 h-1 md:w-6 md:h-2 bg-blue-400 rounded-full" />
+                <div className="w-3 h-1 md:w-6 md:h-2 bg-green-400 rounded-full" />
                 <span className="text-muted-foreground">Nutrition</span>
+              </div>
+              <div className="flex items-center gap-2 ">
+                <div className="w-3 h-1 md:w-6 md:h-2 bg-blue-400 rounded-full" />
+                <span className="text-muted-foreground">Water</span>
               </div>
               <div className="flex items-center gap-2 ">
                 <div className="w-3 h-1 md:w-6 md:h-2 bg-red-400 rounded-full" />
@@ -219,7 +194,7 @@ export function ProgressCalendar({ className, initialProgress }: ProgressCalenda
               </div>
             </div>
           </div>
-        )}
+        
       </CardContent>
     </div>
   );

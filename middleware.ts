@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
 
   // Get the authentication token from the cookies
   const token = request.cookies.get(AUTH_TOKEN_KEY)?.value;
-  console.log(token)
+  console.log("middleware",token)
 
   // If the path requires authentication and the user is not authenticated
   if (!isPublicPath && !token) {

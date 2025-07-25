@@ -18,16 +18,9 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
+import { useData } from "@/context/data-context";
+import { useMemo } from "react";
 
-const chartData = [
-  { day: "Mon", completion_rate: 95, is_rest_day: false },
-  { day: "Tue", completion_rate: 88, is_rest_day: false },
-  { day: "Wed", completion_rate: 92, is_rest_day: false },
-  { day: "Thu", completion_rate: 0, is_rest_day: true },
-  { day: "Fri", completion_rate: 85, is_rest_day: false },
-  { day: "Sat", completion_rate: 78, is_rest_day: false },
-  { day: "Sun", completion_rate: 0, is_rest_day: true },
-];
 
 const chartConfig = {
   completion_rate: {
@@ -41,6 +34,27 @@ export default function WeeklyWorkoutCompletion({
 }: {
     className?: string
 }) {
+  const { weeklyProgress } = useData();
+  const charrtData = [
+    { day: "Mon", completion_rate: 95, is_rest_day: false },
+    { day: "Tue", completion_rate: 88, is_rest_day: false },
+    { day: "Wed", completion_rate: 92, is_rest_day: false },
+    { day: "Thu", completion_rate: 0, is_rest_day: true },
+    { day: "Fri", completion_rate: 85, is_rest_day: false },
+    { day: "Sat", completion_rate: 78, is_rest_day: false },
+    { day: "Sun", completion_rate: 0, is_rest_day: true },
+  ];
+
+  const chartData = useMemo(() => {
+    return weeklyProgress.map((wp)=> {
+      console.log('chart data changed', wp)
+      return {
+        day: new Date(wp.date).toLocaleDateString('en-US', { weekday: 'short'}),
+        completion_rate: wp.workout_progress,
+        is_rest_day: wp.is_rest_day
+      }
+    })
+  }, [weeklyProgress]);
   const avgCompletion =
     chartData
       .filter((day) => !day.is_rest_day)

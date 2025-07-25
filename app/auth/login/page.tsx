@@ -17,6 +17,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // alert('button clicked')
     setIsLoading(true);
     try {
       if (!email || !password) {
@@ -32,7 +33,10 @@ export default function LoginPage() {
     }
   };
   return (
-    <form onSubmit={handleSubmit}>
+    // <form onSubmit={handleSubmit}></form>
+      <div className="glass p-6 rounded-xl space-y-4">
+
+      
       <div className="grid gap-6">
         <div className="grid gap-6">
           <div className="grid gap-3">
@@ -72,8 +76,8 @@ export default function LoginPage() {
             type="submit"
             disabled={isLoading}
             // size={"lg"}
-            className="cyber-button text-white shadow-md w-full rounded-full font-semibold"
-            // onClick={handleSubmit}
+            className="cyber-butto text-white shadow-md w-full rounded-full font-semibold"
+            onClick={handleSubmit}
           >
             <Loader2Icon className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : "hidden"}`} />
             <Zap className={`h-4 w-4 mr-1 ${isLoading ? 'hidden': 'animate-ping'}`}  />
@@ -87,6 +91,7 @@ export default function LoginPage() {
           </a>
         </div>
       </div>
-    </form>
+      </div>
+    
   );
 }

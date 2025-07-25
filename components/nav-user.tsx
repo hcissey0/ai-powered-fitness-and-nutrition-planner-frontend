@@ -132,18 +132,6 @@ export function NavUser() {
                 Profile
               </DropdownMenuItem>
               </Link>
-              <Link href={'/u/plans'}>
-              <DropdownMenuItem>
-                <Dumbbell />
-                Plans
-              </DropdownMenuItem>
-              </Link>
-              <Link href={'/u/progress'}>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Progress
-              </DropdownMenuItem>
-              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => logout()}>
