@@ -1,22 +1,14 @@
-"use client"
-
+// components/nav-user.tsx
+"use client";
 import {
-  BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
-  Dumbbell,
   LayoutDashboard,
   LogOut,
-  Sparkles,
   User2Icon,
-} from "lucide-react"
-
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+} from "lucide-react";
+import Link from "next/link";
+import { useAuth } from "@/context/auth-context";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,118 +17,111 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { User } from "@/interfaces"
-import { useAuth } from "@/context/auth-context"
-import Link from "next/link"
+} from "@/components/ui/sidebar";
 
 export function NavUser() {
-  const { isMobile } = useSidebar()
-  const { user, logout } = useAuth()
+  const { isMobile } = useSidebar();
+  const { user, logout } = useAuth();
+
+  if (!user) {
+    // Show a skeleton loader while user data is being fetched
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" className="animate-pulse">
+            <Avatar className="h-8 w-8 rounded-lg bg-muted" />
+            <div className="flex-1 space-y-2 py-1">
+              <div className="h-2 w-24 rounded bg-muted"></div>
+              <div className="h-2 w-32 rounded bg-muted"></div>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
+  const userInitial =
+    user.first_name.charAt(0).toUpperCase() +
+      user.last_name.charAt(0).toUpperCase() ||
+    user.username.charAt(0).toUpperCase();
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            {user ? 
-          
             <SidebarMenuButton
-            size="lg"
-            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage
-                  src={user.profile?.image as string}
-                  alt={user.first_name + " " + user.last_name}
-                  />
+                  src={user.profile?.image || undefined}
+                  alt={`${user.first_name} ${user.last_name}`}
+                />
                 <AvatarFallback className="rounded-lg">
-                  {user.first_name.charAt(0).toUpperCase() +
-                    user.last_name.charAt(0).toUpperCase() ||
-                    user.username.charAt(0).toUpperCase()}
+                  {userInitial}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
-                  {user?.first_name + " " + user?.last_name}
+                  {user.first_name} {user.last_name}
                 </span>
-                <span className="truncate text-xs">{user?.email}</span>
+                <span className="truncate text-xs">{user.email}</span>
               </div>
-              {/* <ChevronsUpDown className="ml-auto size-4" /> */}
+              <ChevronsUpDown className="ml-auto size-4 shrink-0" />
             </SidebarMenuButton>
-                  :
-        <SidebarMenuButton
-            size="lg"
-            className="animate-pulse data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="h-8 w-8 rounded-lg animate-pulse">
-                <AvatarFallback className="rounded-lg"></AvatarFallback>
-              </Avatar>
-              </SidebarMenuButton>
-                  }
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="glass-popover w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="glass-popover w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="start"
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
-              {user &&
-              
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
-                    src={user.profile?.image as string}
-                    alt={user.first_name + " " + user.last_name}
+                    src={user.profile?.image || undefined}
+                    alt={`${user.first_name} ${user.last_name}`}
                   />
                   <AvatarFallback className="rounded-lg">
-                    {user.first_name.charAt(0).toUpperCase() +
-                      user.last_name.charAt(0).toUpperCase() ||
-                      user.username.charAt(0).toUpperCase()}
+                    {userInitial}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
-                    {user?.first_name + " " + user?.last_name}
+                    {user.first_name} {user.last_name}
                   </span>
-                  <span className="truncate text-xs">{user?.email}</span>
+                  <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
-                  }
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator /> */}
             <DropdownMenuGroup>
-              <Link href={'/u'}>
-              <DropdownMenuItem>
-                <LayoutDashboard />
-                Dashboard
+              <DropdownMenuItem asChild>
+                <Link href="/u">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
               </DropdownMenuItem>
-              </Link>
-              <Link href={'/u/profile'}>
-              <DropdownMenuItem>
-                <User2Icon />
-                Profile
+              <DropdownMenuItem asChild>
+                <Link href="/u/profile">
+                  <User2Icon className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
               </DropdownMenuItem>
-              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => logout()}>
-              <LogOut />
-              Log out
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -144,3 +129,152 @@ export function NavUser() {
     </SidebarMenu>
   );
 }
+
+//////////////////// old code //////////////////////////////////////
+
+// "use client"
+
+// import {
+//   BadgeCheck,
+//   Bell,
+//   ChevronsUpDown,
+//   CreditCard,
+//   Dumbbell,
+//   LayoutDashboard,
+//   LogOut,
+//   Sparkles,
+//   User2Icon,
+// } from "lucide-react"
+
+// import {
+//   Avatar,
+//   AvatarFallback,
+//   AvatarImage,
+// } from "@/components/ui/avatar"
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuGroup,
+//   DropdownMenuItem,
+//   DropdownMenuLabel,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu"
+// import {
+//   SidebarMenu,
+//   SidebarMenuButton,
+//   SidebarMenuItem,
+//   useSidebar,
+// } from "@/components/ui/sidebar"
+// import { User } from "@/interfaces"
+// import { useAuth } from "@/context/auth-context"
+// import Link from "next/link"
+
+// export function NavUser() {
+//   const { isMobile } = useSidebar()
+//   const { user, logout } = useAuth()
+
+//   return (
+//     <SidebarMenu>
+//       <SidebarMenuItem>
+//         <DropdownMenu>
+//           <DropdownMenuTrigger asChild>
+//             {user ?
+
+//             <SidebarMenuButton
+//             size="lg"
+//             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+//             >
+//               <Avatar className="h-8 w-8 rounded-lg">
+//                 <AvatarImage
+//                   src={user.profile?.image as string}
+//                   alt={user.first_name + " " + user.last_name}
+//                   />
+//                 <AvatarFallback className="rounded-lg">
+//                   {user.first_name.charAt(0).toUpperCase() +
+//                     user.last_name.charAt(0).toUpperCase() ||
+//                     user.username.charAt(0).toUpperCase()}
+//                 </AvatarFallback>
+//               </Avatar>
+//               <div className="grid flex-1 text-left text-sm leading-tight">
+//                 <span className="truncate font-medium">
+//                   {user?.first_name + " " + user?.last_name}
+//                 </span>
+//                 <span className="truncate text-xs">{user?.email}</span>
+//               </div>
+//               {/* <ChevronsUpDown className="ml-auto size-4" /> */}
+//             </SidebarMenuButton>
+//                   :
+//         <SidebarMenuButton
+//             size="lg"
+//             className="animate-pulse data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+//             >
+//               <Avatar className="h-8 w-8 rounded-lg animate-pulse">
+//                 <AvatarFallback className="rounded-lg"></AvatarFallback>
+//               </Avatar>
+//               </SidebarMenuButton>
+//                   }
+//           </DropdownMenuTrigger>
+//           <DropdownMenuContent
+//             className="glass-popover w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+//             side={isMobile ? "bottom" : "right"}
+//             align="start"
+//             sideOffset={4}
+//           >
+//             <DropdownMenuLabel className="p-0 font-normal">
+//               {user &&
+
+//               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+//                 <Avatar className="h-8 w-8 rounded-lg">
+//                   <AvatarImage
+//                     src={user.profile?.image as string}
+//                     alt={user.first_name + " " + user.last_name}
+//                   />
+//                   <AvatarFallback className="rounded-lg">
+//                     {user.first_name.charAt(0).toUpperCase() +
+//                       user.last_name.charAt(0).toUpperCase() ||
+//                       user.username.charAt(0).toUpperCase()}
+//                   </AvatarFallback>
+//                 </Avatar>
+//                 <div className="grid flex-1 text-left text-sm leading-tight">
+//                   <span className="truncate font-medium">
+//                     {user?.first_name + " " + user?.last_name}
+//                   </span>
+//                   <span className="truncate text-xs">{user?.email}</span>
+//                 </div>
+//               </div>
+//                   }
+//             </DropdownMenuLabel>
+//             <DropdownMenuSeparator />
+//             {/* <DropdownMenuGroup>
+//               <DropdownMenuItem>
+//                 <Sparkles />
+//                 Upgrade to Pro
+//               </DropdownMenuItem>
+//             </DropdownMenuGroup>
+//             <DropdownMenuSeparator /> */}
+//             <DropdownMenuGroup>
+//               <Link href={'/u'}>
+//               <DropdownMenuItem>
+//                 <LayoutDashboard />
+//                 Dashboard
+//               </DropdownMenuItem>
+//               </Link>
+//               <Link href={'/u/profile'}>
+//               <DropdownMenuItem>
+//                 <User2Icon />
+//                 Profile
+//               </DropdownMenuItem>
+//               </Link>
+//             </DropdownMenuGroup>
+//             <DropdownMenuSeparator />
+//             <DropdownMenuItem onClick={() => logout()}>
+//               <LogOut />
+//               Log out
+//             </DropdownMenuItem>
+//           </DropdownMenuContent>
+//         </DropdownMenu>
+//       </SidebarMenuItem>
+//     </SidebarMenu>
+//   );
+// }

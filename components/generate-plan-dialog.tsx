@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -268,9 +269,9 @@ export function GeneratePlanDialog({
 
         <DialogFooter>
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={onClose}
-            className="glass bg-transparent"
+            className="glas bg-transparent"
             disabled={isLoading}
           >
             Cancel

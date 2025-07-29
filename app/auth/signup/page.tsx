@@ -39,7 +39,7 @@ export default function SignUpPage() {
       }
 
       // Simulate a successful registration
-      await signup(firstName, lastName, email, username, password);
+      await signup({first_name: firstName, last_name: lastName, email, username, password});
       toast.success("Registration successful! Logging in...");
       // Redirect or show success message here
     } catch (error) {
