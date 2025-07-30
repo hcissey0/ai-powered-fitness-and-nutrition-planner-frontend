@@ -23,7 +23,7 @@ export function MealCard({
   return (
     <Card
       className={`transition-all ${
-        isTracked ? "bg-card/50 border-dashed" : "glass hover:border-primary/50"
+        isTracked ? "bg-transparent border-dashed border-muted" : "glass hover:border-primary/50"
       }`}
     >
       <CardContent className="flex flex-col p-4">

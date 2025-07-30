@@ -43,9 +43,9 @@ export default function MacronutrientBreakdown({className}:{className?:string}) 
   const { todayStats } = useData();
   
   const chartData = [
-    { nutrient: "protein", grams: todayStats?.protein || 0, fill: "var(--color-rose-400)" },
-    { nutrient: "carbs", grams: todayStats?.carbs || 0, fill: "var(--color-blue-400)" },
-    { nutrient: "fats", grams: todayStats?.fats || 0, fill: "var(--color-green-400)" },
+    { nutrient: "protein", grams: todayStats?.total_protein || 0, fill: "var(--color-rose-400)" },
+    { nutrient: "carbs", grams: todayStats?.total_carbs || 0, fill: "var(--color-blue-400)" },
+    { nutrient: "fats", grams: todayStats?.total_fats || 0, fill: "var(--color-green-400)" },
   ];
 
   const totalGrams = chartData.reduce((acc, curr) => acc + curr.grams, 0);

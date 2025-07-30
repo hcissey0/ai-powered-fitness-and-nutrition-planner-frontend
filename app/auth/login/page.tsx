@@ -15,9 +15,11 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const { login } = useAuth();
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // alert('button clicked')
+
     setIsLoading(true);
     try {
       if (!email || !password) {

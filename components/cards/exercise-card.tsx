@@ -15,7 +15,7 @@ export function ExerciseCard({
   return (
     <Card
       className={`transition-all ${
-        isTracked ? "bg-card/50 border-dashed" : "glass hover:border-primary/50"
+        isTracked ? "bg-transparent border-dashed border-muted" : "glass hover:border-primary/50"
       }`}
     >
       <CardContent className="flex flex-wrap gap-2 items-center justify-between p-">

@@ -47,7 +47,6 @@ export default function WeeklyWorkoutCompletion({
 
   const chartData = useMemo(() => {
     return weeklyProgress.map((wp)=> {
-      console.log('chart data changed', wp)
       return {
         day: new Date(wp.date).toLocaleDateString('en-US', { weekday: 'short'}),
         completion_rate: wp.workout_progress,

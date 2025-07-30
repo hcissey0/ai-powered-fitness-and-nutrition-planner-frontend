@@ -14,7 +14,7 @@ export function WaterIntakeCard({
   onTrack: (litres: number) => void;
 }) {
   return (
-    <Card className="glass">
+    <Card className="glas border-0 bg-transparent shadow-none">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-base">
           <Droplets className="h-5 w-5 text-blue-400" />
@@ -39,7 +39,7 @@ export function WaterIntakeCard({
         <Button
           onClick={() => onTrack(0.25)}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          disabled={stats.water_intake >= stats.target_water}
+          // disabled={stats.water_intake >= stats.target_water}
         >
           <Droplets className="h-4 w-4 mr-2" /> Add 250ml
         </Button>
