@@ -31,8 +31,8 @@ export default function ImageUploadAvatar({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setImagePreview(defaultImage as string)
-  }, [defaultImage])
+    setImagePreview(defaultImage as string);
+  }, [defaultImage]);
 
   const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -111,7 +111,7 @@ export default function ImageUploadAvatar({
           <Button
             variant="destructive"
             size="icon"
-            className="absolute -top-2 -right-2 w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute -top-2 -right-2 w-6 h-6 rounded-full opacity-80 group-hover:opacity-100 transition-opacity"
             onClick={handleRemoveImage}
           >
             <X className="w-3 h-3" />
@@ -123,7 +123,7 @@ export default function ImageUploadAvatar({
             className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
             onClick={handleUploadClick}
           >
-            <Upload className="w-6 h-6 text-white" />
+            <Upload className="w-6 h-6 text-foreground" />
           </div>
         )}
       </div>
@@ -150,7 +150,7 @@ export default function ImageUploadAvatar({
             size="sm"
             onClick={handleRemoveImage}
             disabled={disabled}
-            className="text-red-600 hover:text-white hover:bg-red-50"
+            className="text-red-600 hover:text-foregroundround hover:bg-red-50"
           >
             <Trash className="w-4 h-4 mr-2" />
             Remove Image

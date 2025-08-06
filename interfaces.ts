@@ -23,9 +23,26 @@ export interface Profile {
     | "lightly_active"
     | "moderately_active"
     | "very_active"
+    | 'athlete'
     | null;
-  goal: "weight_loss" | "maintenance" | "muscle_gain" | null;
+  goal: "weight_loss" | "maintenance" | "muscle_gain" | 'endurance' | null;
   dietary_preferences: string;
+  notifications_enabled: boolean;
+  tracking_enabled: boolean;
+
+  allergies: string | null;
+  liked_foods: string | null;
+  disliked_foods: string | null;
+  disabilities: string | null;
+  medical_conditions: string | null;
+
+  allergies_list: string[];
+  liked_foods_list: string[];
+  disliked_foods_list: string[];
+  disabilities_list: string[];
+  medical_conditions_list: string[];
+  dietary_preferences_list: string[];
+
   bmi: number | null;
   created_at: string;
   updated_at: string;

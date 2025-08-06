@@ -2,6 +2,7 @@ import { Check, Clock, X } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { ExerciseTimer } from "../exercise-timer";
+import { useData } from "@/context/data-context";
 
 export function ExerciseCard({
   exercise,
@@ -12,6 +13,7 @@ export function ExerciseCard({
   isTracked: boolean;
   onTrack: () => void;
 }) {
+  const { trackingEnabled } = useData()
   return (
     <Card
       className={`transition-all ${
@@ -54,18 +56,20 @@ export function ExerciseCard({
               restPeriodSeconds={exercise.rest_period_seconds}
             />
           )}
+          {trackingEnabled && 
           <Button
-            size="icon"
-            variant={isTracked ? "ghost" : "default"}
-            onClick={onTrack}
-            className={`rounded-full ${
-              isTracked
-                ? "text-green-500 bg-green-500/10 hover:bg-green-500/20"
-                : "bg-green-600 hover:bg-green-700 text-white"
+          size="icon"
+          variant={isTracked ? "ghost" : "default"}
+          onClick={onTrack}
+          className={`rounded-full ${
+            isTracked
+            ? "text-green-500 bg-green-500/10 hover:bg-green-500/20"
+            : "bg-green-600 hover:bg-green-700 text-foreground"
             }`}
-          >
+            >
             {isTracked ? <X /> : <Check />}
           </Button>
+          }
         </div>
       </CardContent>
     </Card>

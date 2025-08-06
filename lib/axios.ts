@@ -1,3 +1,4 @@
+// lib/axios.ts
 import axios from "axios";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -5,7 +6,7 @@ import { toast } from "sonner";
 // IMPORTANT: For client-side code, Next.js requires the prefix NEXT_PUBLIC_
 // Ensure this variable is set in your .env.local file
 const apiUrl =
-  process.env.NEXT_PUBLIC_API_URL || "http://10.192.205.20:8000/api";
+  process.env.NEXT_PUBLIC_API_URL;
 
 export const api = axios.create({
   baseURL: apiUrl,

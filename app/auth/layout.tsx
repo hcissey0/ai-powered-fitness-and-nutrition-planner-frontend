@@ -1,3 +1,4 @@
+// app/auth/layout.tsx
 import { Heart, Dumbbell } from "lucide-react";
 
 export default function AuthLayout({

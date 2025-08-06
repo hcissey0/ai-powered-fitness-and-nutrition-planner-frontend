@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -5,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/auth-context";
 import { Toaster } from "sonner";
 import { ApiStatus } from "@/components/api-status";
+import { GoogleOAuthProvider } from '@react-oauth/google'
 
 const spaceMono = localFont({
   src: [
@@ -28,23 +30,44 @@ export const metadata: Metadata = {
   description: "Your personalized AI-powered guide to fitness and nutrition.",
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+ const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID;
+
+ if (!googleClientId) {
+   console.error(
+     "FATAL: NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID is not defined in .env.local"
+   );
+   // You might want to render an error page here
+   return (
+     <html lang="en" suppressHydrationWarning>
+       <body>
+         <h1 style={{ color: "red", padding: "2rem" }}>
+           Error: Google Client ID is not configured.
+         </h1>
+       </body>
+     </html>
+   );
+ }
+  
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${spaceMono.className} ${spaceMono.variable} antialiased`}
       >
+        <GoogleOAuthProvider  clientId={googleClientId as string}>
         <ApiStatus />
+
         <AuthProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
             disableTransitionOnChange
-          >
+            >
             {children}
           </ThemeProvider>
         </AuthProvider>
@@ -56,11 +79,12 @@ export default function RootLayout({
             unstyled: true,
             classNames: {
               toast:
-                "glass w-100 min-h-20 p-4 rounded-lg flex items-center justify-center gap-2",
+              "glass w-100 min-h-20 p-4 rounded-lg flex items-center justify-center gap-2",
               closeButton: "absolute top-0.5 right-0.5 rounded-full",
             },
           }}
-        />
+          />
+          </GoogleOAuthProvider>
       </body>
     </html>
   );

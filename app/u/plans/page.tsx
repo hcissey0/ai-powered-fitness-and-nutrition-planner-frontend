@@ -111,11 +111,11 @@ function PlanSelector({
           </button>
         ))}
       </div>
-      {selectedPlan &&
-      <Button onClick={handleDeletePlan} variant="destructive" size="sm">
-        <Ban className="h-4 w-4 mr-2" /> Delete Selected Plan
-      </Button>
-      }
+      {selectedPlan && (
+        <Button onClick={handleDeletePlan} variant="destructive" size="sm">
+          <Ban className="h-4 w-4 mr-2" /> Delete Selected Plan
+        </Button>
+      )}
     </div>
   );
 }
@@ -183,7 +183,7 @@ function WorkoutStats({
             <div className="text-3xl font-bold text-green-600">
               {selectedDayStats.workout.completedToday}
             </div>
-            <div className="text-sm text-white">
+            <div className="text-sm text-foreground">
               of {selectedDayStats.workout.totalToday} exercises
             </div>
           </div>
@@ -242,7 +242,7 @@ function WorkoutStats({
           <CardTitle className="text-lg">Tips</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm text-white">
+          <div className="space-y-2 text-sm text-foregroundround">
             <p>💡 Focus on proper form over speed</p>
             <p>💧 Stay hydrated throughout your workout</p>
             <p>⏰ Use the rest timer between sets</p>
@@ -422,7 +422,7 @@ function NutritionStats({
                 0.25
               )
             }
-            className="w-full text-white bg-blue-600 hover:bg-blue-700"
+            className="w-full text-foreground bg-blue-600 hover:bg-blue-700"
             // disabled={
             //   selectedDayStats.nutrition.waterIntake >=
             //   selectedDayStats.nutrition.waterTarget
@@ -440,7 +440,7 @@ function NutritionStats({
           <CardTitle className="text-lg">Nutrition Tips</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm text-white">
+          <div className="space-y-2 text-sm text-foreground">
             <p>🥘 Traditional Ghanaian meals are naturally balanced</p>
             <p>💧 Drink water before each meal</p>
             <p>🍌 Include local fruits for vitamins</p>
@@ -553,7 +553,7 @@ function WorkoutPlanView({ plan }: { plan: FitnessPlan }) {
                 }
                 onClick={() => setSelectedDay(day.day_of_week)}
                 className="h-16 flex-col"
-                disabled={day.is_rest_day}
+                // disabled={day.is_rest_day}
               >
                 {dayNames[day.day_of_week - 1]}
                 <span className="text-xs text-muted-foreground">
@@ -585,7 +585,7 @@ function WorkoutPlanView({ plan }: { plan: FitnessPlan }) {
             );
           })
         ) : (
-          <Card className="glass text-center p-8 flex flex-col items-center justify-center h-full">
+          <Card className="glass lg:col-span-2 text-center p-8 flex flex-col items-center justify-center">
             <Trophy className="w-16 h-16 text-yellow-500 mb-4" />
             <h3 className="text-xl font-bold">Rest Day</h3>
             <p className="text-muted-foreground">
@@ -635,7 +635,6 @@ export default function PlanPage() {
         selectedPlan={selectedPlan}
         setSelectedPlan={setSelectedPlan}
       />
-
 
       {selectedPlan ? (
         <Tabs defaultValue="nutrition" className="w-full">

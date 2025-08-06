@@ -14,6 +14,7 @@ import Cookies from "js-cookie";
 import { User } from "@/interfaces";
 import { handleApiError } from "@/lib/error-handler";
 import { AUTH_TOKEN_KEY, USER_KEY } from "@/lib/constants";
+import { loginWithGoogle as apiLoginWithGoogle, deleteMe } from "@/lib/api-service";
 import { toast } from "sonner";
 
 interface AuthContextType {
@@ -22,6 +23,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (accessToken: string) => Promise<void>;
+  deleteMyAccount: () => void;
   logout: () => void;
   signup: (
     formData: Omit<User, "id" | "is_active" | "date_joined" | "profile"> & {
@@ -119,6 +122,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteMyAccount = async () => {
+    try {
+      await deleteMe();
+      await logout();
+    } catch (e) {
+      handleApiError(e, "Failed to delete Account");
+      throw e;
+    }
+  }
+
+  const loginWithGoogle = async (accessToken: string) => {
+    try {
+      const res = await apiLoginWithGoogle(accessToken);
+      console.log("Google Login Response:", res);
+      persistAuth(res.token, res.user);
+      router.push('/u');
+
+    } catch (err) {
+      handleApiError(err, "Google Login Failed")
+      throw err
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -127,6 +153,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAuthenticated: !!token && !!user,
         isLoading,
         login,
+        loginWithGoogle,
+        deleteMyAccount,
         logout,
         signup,
         refreshUser,

@@ -114,7 +114,7 @@ export function NavUser() {
               <DropdownMenuItem asChild>
                 <Link href="/u/profile">
                   <User2Icon className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                  <span>Profile Settings</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

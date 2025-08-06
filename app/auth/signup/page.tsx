@@ -1,5 +1,12 @@
-'use client'
-import { Dumbbell, GalleryVerticalEnd, Heart, Loader2Icon, Zap } from "lucide-react";
+// app/auth/signup/page.tsx
+"use client";
+import {
+  Dumbbell,
+  GalleryVerticalEnd,
+  Heart,
+  Loader2Icon,
+  Zap,
+} from "lucide-react";
 
 import { LoginForm } from "@/components/login-form";
 import { Label } from "@/components/ui/label";
@@ -11,25 +18,31 @@ import React from "react";
 import { toast } from "sonner";
 
 export default function SignUpPage() {
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
+  const [username, setUsername] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [firstName, setFirstName] = React.useState("");
-    const [lastName, setLastName] = React.useState("");
-    const [username, setUsername] = React.useState("");
-    const [email, setEmail] = React.useState("");
-    const [password, setPassword] = React.useState("");
-    const [confirmPassword, setConfirmPassword] = React.useState("");
-
-    const { signup } = useAuth();
+  const { signup } = useAuth();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-  
+
     try {
       // Simulate registration logic
 
-      if (!firstName || !lastName || !username || !email || !password || !confirmPassword) {
+      if (
+        !firstName ||
+        !lastName ||
+        !username ||
+        !email ||
+        !password ||
+        !confirmPassword
+      ) {
         toast.error("All fields are required.");
         return;
       }
@@ -39,7 +52,13 @@ export default function SignUpPage() {
       }
 
       // Simulate a successful registration
-      await signup({first_name: firstName, last_name: lastName, email, username, password});
+      await signup({
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        username,
+        password,
+      });
       toast.success("Registration successful! Logging in...");
       // Redirect or show success message here
     } catch (error) {
@@ -47,11 +66,11 @@ export default function SignUpPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  };
   return (
     <form onSubmit={handleRegister} className="space-y-4 glass p-6 rounded-xl ">
       <div className="space-y-2">
-        <Label htmlFor="firstName" className="text-white">
+        <Label htmlFor="firstName" className="text-foreground">
           First Name
         </Label>
         <Input
@@ -65,7 +84,7 @@ export default function SignUpPage() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="lastName" className="text-white">
+        <Label htmlFor="lastName" className="text-foreground">
           Last Name
         </Label>
         <Input
@@ -79,7 +98,7 @@ export default function SignUpPage() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="username" className="text-white">
+        <Label htmlFor="username" className="text-foreground">
           Username
         </Label>
         <Input
@@ -93,7 +112,7 @@ export default function SignUpPage() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-white">
+        <Label htmlFor="email" className="text-foreground">
           Email
         </Label>
         <Input
@@ -107,7 +126,7 @@ export default function SignUpPage() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-white">
+        <Label htmlFor="password" className="text-foreground">
           Password
         </Label>
         <Input
@@ -121,7 +140,7 @@ export default function SignUpPage() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword" className="text-white">
+        <Label htmlFor="confirmPassword" className="text-foreground">
           Confirm Password
         </Label>
         <Input
@@ -136,11 +155,15 @@ export default function SignUpPage() {
       </div>
       <Button
         type="submit"
-        className="w-full cyber-button text-white font-semibold rounded-full"
+        className="w-full cyber-button text-foreground font-semibold rounded-full"
         disabled={isLoading}
       >
-        <Loader2Icon className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : "hidden"}`} />
-        <Zap className={`h-4 w-4 mr-1 ${isLoading ? 'hidden' : 'animate-ping'}`} />
+        <Loader2Icon
+          className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : "hidden"}`}
+        />
+        <Zap
+          className={`h-4 w-4 mr-1 ${isLoading ? "hidden" : "animate-ping"}`}
+        />
         {isLoading ? "Creating account..." : "Create Account"}
       </Button>
       <div className="text-center text-sm">

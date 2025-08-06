@@ -23,7 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Settings, Activity, Save, Target, Loader2 } from "lucide-react";
+import { User, Settings, Activity, Save, Target, Loader2, Utensils, HeartPulseIcon, CheckCircle, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { updateProfile, updateUser } from "@/lib/api-service";
 import { Profile, User as UserInterface } from "@/interfaces";
@@ -31,6 +31,24 @@ import { useAuth } from "@/context/auth-context";
 import { Textarea } from "@/components/ui/textarea";
 import ImageUploadAvatar from "@/components/image-upload-avatar";
 import { handleApiError } from "@/lib/error-handler";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+interface Step {
+  id: number;
+  title: string;
+  icon: any;
+}
+
+
+const steps: Step[] = [
+  { id: 1, title: "Personal Information", icon: User },
+  { id: 2, title: "Activity Level", icon: Activity },
+  { id: 3, title: "Fitness Goal", icon: Target },
+  { id: 4, title: "Dietary Preferences", icon: Utensils },
+  { id: 5, title: "Didsabilities & Health Conditions", icon: HeartPulseIcon },
+  { id: 6, title: "Tracking & Notification", icon: CheckCircle },
+];
 
 type UserDetails = Pick<
   UserInterface,
@@ -38,9 +56,9 @@ type UserDetails = Pick<
 >;
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, deleteMyAccount } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-
+  const [ confirmDeleteEmail, setConfirmDeleteEmail] = useState('');
   const [userDetails, setUserDetails] = useState<Partial<UserDetails>>({});
   const [profileData, setProfileData] = useState<Partial<Profile>>({});
 
@@ -166,6 +184,7 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       handleUserDetailsChange("first_name", e.target.value)
                     }
+                    className="glass"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -176,6 +195,7 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       handleUserDetailsChange("last_name", e.target.value)
                     }
+                    className="glass"
                   />
                 </div>
               </div>
@@ -187,6 +207,7 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     handleUserDetailsChange("username", e.target.value)
                   }
+                  className="glass"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -198,6 +219,7 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     handleUserDetailsChange("email", e.target.value)
                   }
+                  className="glass"
                 />
               </div>
             </CardContent>
@@ -213,10 +235,17 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <ImageUploadAvatar
-                defaultImage={profileData.image as string}
-                onImageChange={(image) => handleProfileChange("image", image)}
-              />
+              <div className="flex flex-col items-center">
+                <ImageUploadAvatar
+                  defaultImage={profileData.image as string}
+                  onImageChange={(image) => handleProfileChange("image", image)}
+                />
+                {!profileData.image && (
+                  <p className="text-xs text-muted-foreground">
+                    click to add image
+                  </p>
+                )}
+              </div>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="age">Age</Label>
@@ -225,6 +254,7 @@ export default function ProfilePage() {
                     type="number"
                     value={profileData.age || ""}
                     onChange={(e) => handleProfileChange("age", e.target.value)}
+                    className="glass"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -236,6 +266,7 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       handleProfileChange("current_weight", e.target.value)
                     }
+                    className="glass"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -247,6 +278,7 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       handleProfileChange("height", e.target.value)
                     }
+                    className="glass"
                   />
                 </div>
               </div>
@@ -256,7 +288,7 @@ export default function ProfilePage() {
                   value={profileData.gender as string}
                   onValueChange={(v) => handleProfileChange("gender", v)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="glass">
                     <SelectValue placeholder="Select gender..." />
                   </SelectTrigger>
                   <SelectContent className="glass-popover">
@@ -265,19 +297,10 @@ export default function ProfilePage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex flex-col gap-2">
-                <Label>Dietary Preferences</Label>
-                <Textarea
-                  value={profileData.dietary_preferences || ""}
-                  onChange={(e) =>
-                    handleProfileChange("dietary_preferences", e.target.value)
-                  }
-                  placeholder="e.g., vegetarian, no nuts..."
-                />
-              </div>
             </CardContent>
           </Card>
 
+          {/* Activity level and fitness goal */}
           <Card className="glass">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -286,7 +309,7 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <Label>Activity Level</Label>
+                <Label className="font-semibold">Activity Level:</Label>
                 <RadioGroup
                   value={profileData.activity_level}
                   onValueChange={(v) =>
@@ -313,7 +336,7 @@ export default function ProfilePage() {
                 </RadioGroup>
               </div>
               <div className="flex flex-col gap-2">
-                <Label>Fitness Goal</Label>
+                <Label className="font-semibold">Fitness Goal:</Label>
                 <RadioGroup
                   value={profileData.goal}
                   onValueChange={(v) => handleProfileChange("goal", v)}
@@ -335,15 +358,241 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
+
+        <div className="lg:col-span-3 lg:grid lg:grid-cols-2 gap-6">
+          {/* Dietary Preferences */}
+          <Card className="glass">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Utensils className="h-5 w-5 text-primary" /> Dietary
+                Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-3">
+                <Label
+                  htmlFor="dietary_preferences"
+                  className="flex flex-col items-start"
+                >
+                  <div className="font-semibold">Dietary Restrictions:</div>
+                  <div className="text-xs text-muted-foreground">
+                    comma-separated (e.g., vegetarian, vegan, gluten-free,
+                    halal, etc.)
+                  </div>
+                </Label>
+                <Textarea
+                  id="dietary_preferences"
+                  value={profileData.dietary_preferences || ""}
+                  onChange={(e) =>
+                    handleProfileChange("dietary_preferences", e.target.value)
+                  }
+                  className="glass"
+                />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label
+                  htmlFor="allergies"
+                  className="flex flex-col items-start"
+                >
+                  <div className="font-semibold">Allergies:</div>
+                  <div className="text-xs text-muted-foreground">
+                    comma-separated (e.g. groundnuts, corn, etc.)
+                  </div>
+                </Label>
+                <Textarea
+                  id="allergies"
+                  value={profileData.allergies || ""}
+                  onChange={(e) =>
+                    handleProfileChange("allergies", e.target.value)
+                  }
+                  className="glass"
+                />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label
+                  htmlFor="liked_foods"
+                  className="flex flex-col items-start"
+                >
+                  <div className="font-semibold">Foods you like best:</div>
+                  <div className="text-xs text-muted-foreground">
+                    comma-separated (e.g. gob3, koko, etc.)
+                  </div>
+                </Label>
+                <Textarea
+                  id="liked_foods"
+                  value={profileData.liked_foods || ""}
+                  onChange={(e) =>
+                    handleProfileChange("liked_foods", e.target.value)
+                  }
+                  className="glass"
+                />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label
+                  htmlFor="disliked_foods"
+                  className="flex flex-col items-start"
+                >
+                  <div className="font-semibold">Foods you don't like:</div>
+                  <div className="text-xs text-muted-foreground">
+                    comma-separated (e.g. banku, waakye, etc.)
+                  </div>
+                </Label>
+                <Textarea
+                  id="disliked_foods"
+                  value={profileData.disliked_foods || ""}
+                  onChange={(e) =>
+                    handleProfileChange("disliked_foods", e.target.value)
+                  }
+                  className="glass"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HeartPulseIcon className="h-5 w-5 text-primary" /> Disabilities
+                & Health Conditions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-3">
+                <Label
+                  htmlFor="disabilities"
+                  className="flex flex-col items-start"
+                >
+                  <div className="font-semibold">Disabilities:</div>
+                  <div className="text-xs text-muted-foreground">
+                    comma-separated (e.g. short-sighted, deaf etc.)
+                  </div>
+                </Label>
+                <Textarea
+                  id="disabilities"
+                  value={profileData.disabilities || ""}
+                  onChange={(e) =>
+                    handleProfileChange("disabilities", e.target.value)
+                  }
+                  className="glass"
+                />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label
+                  htmlFor="medical_conditions"
+                  className="flex flex-col items-start"
+                >
+                  <div className="font-semibold">Health conditions:</div>
+                  <div className="text-xs text-muted-foreground">
+                    comma-separated (e.g. hypertension, athsma etc.)
+                  </div>
+                </Label>
+                <Textarea
+                  id="medical_conditions"
+                  value={profileData.medical_conditions || ""}
+                  onChange={(e) =>
+                    handleProfileChange("medical_conditions", e.target.value)
+                  }
+                  className="glass"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-4 justify-around">
+        
+        <div className="flex items-center justify-between gap-4 glass p-5 rounded-xl">
+          <Label className="flex flex-col items-start">
+            <div className="font-semibold">Enable Tracking</div>
+            <div className="text-xs text-muted-foreground">
+              Allow the tracking of meals and exercises.
+            </div>
+          </Label>
+          <Switch
+            checked={profileData.tracking_enabled}
+            onCheckedChange={(checked) =>
+              handleProfileChange("tracking_enabled", checked)
+            }
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-4 glass p-5 rounded-xl">
+          <Label className="flex flex-col items-start">
+            <div className="font-semibold">Enable Notifications</div>
+            <div className="text-xs text-muted-foreground">
+              Allow app to send notificaitons.
+            </div>
+          </Label>
+          <Switch
+            checked={profileData.notifications_enabled}
+            onCheckedChange={(checked) =>
+              handleProfileChange("notifications_enabled", checked)
+            }
+          />
+        </div>
       </div>
 
       <Separator />
 
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <Dialog>
+          <DialogTrigger asChild>
+        <Button
+        variant={'destructive'}
+        className="bg-red-500 text-foreground"
+        >
+          <Trash />
+          Delete Account
+        </Button>
+            
+          </DialogTrigger>
+          <DialogContent className="glass">
+            <DialogHeader>
+
+            <DialogTitle>
+              Are you sure you want to delete your account?
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              This action is irreversible
+            </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Label>
+                Type your email to confirm
+              </Label>
+              <Input 
+              className="glass"
+              value={confirmDeleteEmail}
+              onChange={(e)=> setConfirmDeleteEmail(e.target.value)}
+              />
+            </div>
+            <DialogFooter className="flex justify-between">
+              <DialogClose asChild>
+              <Button variant={'default'}
+               className="bg-transparent hover:bg-primary-700 text-foreground">
+                Cancel
+              </Button>
+              </DialogClose>
+              <Button
+              onClick={async () => {
+                await deleteMyAccount();
+            toast.success("Account deleted successfully")
+              }}
+              variant={'destructive'}
+              className="bg-red-500 hover:bg-red-900 text-foreground"
+              disabled={!(userDetails.email === confirmDeleteEmail)}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
         <Button
           onClick={handleSave}
           disabled={isLoading}
-          className="cyber-button min-w-40"
+          className="cyber-button min-w-40 self-end"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

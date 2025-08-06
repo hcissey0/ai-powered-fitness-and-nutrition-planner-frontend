@@ -1,3 +1,4 @@
+// lib/api-service.ts
 import {
   FitnessPlan,
   Profile,
@@ -159,4 +160,20 @@ export const getProgress = async (
 
 export const deletePlan = async (planId: number): Promise<void> => {
   await api.delete(`/users/me/plans/`, { data: { id: planId } });
+};
+
+export const deleteMe = async (): Promise<void> => {
+  await api.delete('/users/me/delete/');
+}
+
+export const loginWithGoogle = async (
+  accessToken: string
+): Promise<{ token: string; user: User }> => {
+  const response = await api.post<{ token: string; user: User }>(
+    "/auth/google/",
+    {
+      access_token: accessToken,
+    }
+  );
+  return response.data;
 };

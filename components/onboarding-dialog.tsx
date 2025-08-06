@@ -30,6 +30,9 @@ import {
   Target,
   Utensils,
   Zap,
+  HeartPulseIcon,
+  CheckCircle,
+  IconNode,
 } from "lucide-react";
 import ImageUploadAvatar from "./image-upload-avatar";
 import { Textarea } from "./ui/textarea";
@@ -38,6 +41,8 @@ import { Profile } from "@/interfaces";
 import { toast } from "sonner";
 import { handleApiError } from "@/lib/error-handler";
 import { useAuth } from "@/context/auth-context";
+import { Separator } from "./ui/separator";
+import { Switch } from "./ui/switch";
 
 interface OnboardingDialogProps {
   open: boolean;
@@ -45,11 +50,19 @@ interface OnboardingDialogProps {
   onClose?: () => void;
 }
 
-const steps = [
+interface Step {
+  id: number;
+  title: string;
+  icon: any;
+}
+
+const steps: Step[] = [
   { id: 1, title: "Personal Information", icon: User },
   { id: 2, title: "Activity Level", icon: Activity },
   { id: 3, title: "Fitness Goal", icon: Target },
   { id: 4, title: "Dietary Preferences", icon: Utensils },
+  { id: 5, title: "Didsabilities & Health Conditions", icon: HeartPulseIcon },
+  { id: 6, title: "Tracking & Notification", icon: CheckCircle },
 ];
 
 export function OnboardingDialog({
@@ -83,7 +96,9 @@ export function OnboardingDialog({
       case 3:
         return !!formData.goal;
       case 4:
-        return true; // Dietary preferences are optional
+      case 5:
+      case 6:
+        return true; // The rest are optional
       default:
         return false;
     }
@@ -166,16 +181,46 @@ export function OnboardingDialog({
             >
               {/* Render step content based on currentStep */}
               {currentStep === 1 && (
-                <Step1 formData={formData} updateFormData={updateFormData} />
+                <Step1
+                  step={steps.find((s) => s.id === currentStep) as any}
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {currentStep === 2 && (
-                <Step2 formData={formData} updateFormData={updateFormData} />
+                <Step2
+                  step={steps.find((s) => s.id === currentStep) as any}
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {currentStep === 3 && (
-                <Step3 formData={formData} updateFormData={updateFormData} />
+                <Step3
+                  step={steps.find((s) => s.id === currentStep) as any}
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {currentStep === 4 && (
-                <Step4 formData={formData} updateFormData={updateFormData} />
+                <Step4
+                  step={steps.find((s) => s.id === currentStep) as any}
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
+              )}
+              {currentStep === 5 && (
+                <Step5
+                  step={steps.find((s) => s.id === currentStep) as any}
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
+              )}
+              {currentStep === 6 && (
+                <Step6
+                  step={steps.find((s) => s.id === currentStep) as any}
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
             </motion.div>
           </AnimatePresence>
@@ -211,56 +256,71 @@ export function OnboardingDialog({
   );
 }
 
+interface StepProps {
+  step: Step;
+  formData: Partial<Profile>;
+  updateFormData: (field: keyof Profile, value: any) => void;
+}
+
 // Sub-components for each step for better organization and readability
-const Step1 = ({ formData, updateFormData }: any) => (
+const Step1 = ({ step, formData, updateFormData }: StepProps) => (
   <div className="space-y-4">
     <div className="flex items-center gap-2">
-      <User className="h-5 w-5 text-primary" />
-      <h3 className="text-lg font-semibold text-foreground">Personal Info</h3>
+      <step.icon className="h-5 w-5 text-primary" />
+      <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
     </div>
-    <ImageUploadAvatar
-      defaultImage={formData.image}
-      onImageChange={(image) => updateFormData("image", image)}
-    />
+    <div className="flex flex-col items-center">
+      <ImageUploadAvatar
+        defaultImage={formData.image as string}
+        onImageChange={(image) => updateFormData("image", image)}
+      />
+      {!formData.image && (
+        <p className="text-xs text-muted-foreground">click to add image</p>
+      )}
+    </div>
+
     <div className="grid grid-cols-2 gap-4">
-      <div>
+      <div className="flex flex-col gap-2">
         <Label htmlFor="age">Age</Label>
         <Input
           id="age"
           type="number"
-          placeholder="25"
+          placeholder="e.g: 25"
           value={formData.age || ""}
           onChange={(e) => updateFormData("age", e.target.value)}
+          className="glass"
         />
       </div>
-      <div>
+      <div className="flex flex-col gap-2">
         <Label htmlFor="current_weight">Weight (kg)</Label>
         <Input
           id="current_weight"
           type="number"
-          placeholder="70"
+          placeholder="e.g: 70"
           value={formData.current_weight || ""}
           onChange={(e) => updateFormData("current_weight", e.target.value)}
+          className="glass"
         />
       </div>
     </div>
-    <div>
+    <div className="flex flex-col gap-2">
       <Label htmlFor="height">Height (cm)</Label>
       <Input
         id="height"
         type="number"
-        placeholder="175"
+        placeholder="e.g: 175"
         value={formData.height || ""}
         onChange={(e) => updateFormData("height", e.target.value)}
+        className="glass"
       />
     </div>
-    <div>
+    <div className="flex flex-col gap-2">
       <Label>Gender</Label>
       <Select
-        value={formData.gender}
+        value={formData.gender as string}
         onValueChange={(value) => updateFormData("gender", value)}
       >
-        <SelectTrigger>
+        <SelectTrigger className="glass">
           <SelectValue placeholder="Select gender" />
         </SelectTrigger>
         <SelectContent className="glass-popover">
@@ -272,11 +332,13 @@ const Step1 = ({ formData, updateFormData }: any) => (
   </div>
 );
 
-const Step2 = ({ formData, updateFormData }: any) => (
+const Step2 = ({ step, formData, updateFormData }: StepProps) => (
   <div className="space-y-4">
     <div className="flex items-center gap-2">
-      <Activity className="h-5 w-5 text-primary" />
-      <h3 className="text-lg font-semibold text-foreground">Activity Level</h3>
+      <step.icon className="h-5 w-5 text-primary" />
+      <h3 className="text-lg font-semibold text-foreground">
+        {step.title}
+      </h3>{" "}
     </div>
     <RadioGroup
       value={formData.activity_level}
@@ -289,6 +351,7 @@ const Step2 = ({ formData, updateFormData }: any) => (
           "lightly_active",
           "moderately_active",
           "very_active",
+          "athlete",
         ] as const
       ).map((level) => (
         <Label
@@ -311,7 +374,7 @@ const Step2 = ({ formData, updateFormData }: any) => (
   </div>
 );
 
-const Step3 = ({ formData, updateFormData }: any) => (
+const Step3 = ({ step, formData, updateFormData }: StepProps) => (
   <div className="space-y-4">
     <div className="flex items-center gap-2">
       <Target className="h-5 w-5 text-primary" />
@@ -322,7 +385,9 @@ const Step3 = ({ formData, updateFormData }: any) => (
       onValueChange={(value) => updateFormData("goal", value)}
       className="space-y-2"
     >
-      {(["weight_loss", "maintenance", "muscle_gain"] as const).map((goal) => (
+      {(
+        ["weight_loss", "maintenance", "muscle_gain", "endurance"] as const
+      ).map((goal) => (
         <Label
           key={goal}
           htmlFor={goal}
@@ -340,26 +405,149 @@ const Step3 = ({ formData, updateFormData }: any) => (
   </div>
 );
 
-const Step4 = ({ formData, updateFormData }: any) => (
-  <div className="space-y-4">
+const Step4 = ({ step, formData, updateFormData }: StepProps) => (
+  <div className="space-y-6">
     <div className="flex items-center gap-2">
-      <Utensils className="h-5 w-5 text-primary" />
-      <h3 className="text-lg font-semibold text-foreground">
-        Dietary Preferences
-      </h3>
+      <step.icon className="h-5 w-5 text-primary" />
+      <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
     </div>
-    <Label htmlFor="dietary_preferences">
-      Please provide any dietary preferences or restrictions (e.g., vegetarian,
-      vegan, gluten-free).
-    </Label>
-    <Textarea
-      id="dietary_preferences"
-      value={formData.dietary_preferences || ""}
-      onChange={(e) => updateFormData("dietary_preferences", e.target.value)}
-      className="min-h-44"
-    />
+    <div className="flex flex-col gap-3">
+      <Label
+        htmlFor="dietary_preferences"
+        className="flex flex-col items-start"
+      >
+        <div className="font-semibold">Dietary Restrictions:</div>
+        <div className="text-xs text-muted-foreground">
+          comma-separated (e.g., vegetarian, vegan, gluten-free, halal, etc.)
+        </div>
+      </Label>
+      <Textarea
+        id="dietary_preferences"
+        value={formData.dietary_preferences || ""}
+        onChange={(e) => updateFormData("dietary_preferences", e.target.value)}
+        className="glass"
+      />
+    </div>
+    <div className="flex flex-col gap-3">
+      <Label htmlFor="allergies" className="flex flex-col items-start">
+        <div className="font-semibold">Allergies:</div>
+        <div className="text-xs text-muted-foreground">
+          comma-separated (e.g. groundnuts, corn, etc.)
+        </div>
+      </Label>
+      <Textarea
+        id="allergies"
+        value={formData.allergies || ""}
+        onChange={(e) => updateFormData("allergies", e.target.value)}
+        className="glass"
+      />
+    </div>
+    <div className="flex flex-col gap-3">
+      <Label htmlFor="liked_foods" className="flex flex-col items-start">
+        <div className="font-semibold">Foods you like best:</div>
+        <div className="text-xs text-muted-foreground">
+          comma-separated (e.g. gob3, koko, etc.)
+        </div>
+      </Label>
+      <Textarea
+        id="liked_foods"
+        value={formData.liked_foods || ""}
+        onChange={(e) => updateFormData("liked_foods", e.target.value)}
+        className="glass"
+      />
+    </div>
+    <div className="flex flex-col gap-3">
+      <Label htmlFor="disliked_foods" className="flex flex-col items-start">
+        <div className="font-semibold">Foods you don't like:</div>
+        <div className="text-xs text-muted-foreground">
+          comma-separated (e.g. banku, waakye, etc.)
+        </div>
+      </Label>
+      <Textarea
+        id="disliked_foods"
+        value={formData.disliked_foods || ""}
+        onChange={(e) => updateFormData("disliked_foods", e.target.value)}
+        className="glass"
+      />
+    </div>
+    <Separator orientation="horizontal" className="mt-5" />
     <p className="text-xs text-muted-foreground">
       This helps our AI tailor your meal plans perfectly.
     </p>
+  </div>
+);
+
+const Step5 = ({ step, formData, updateFormData }: StepProps) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-2">
+      <step.icon className="h-5 w-5 text-primary" />
+      <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
+    </div>
+    <div className="flex flex-col gap-3">
+      <Label htmlFor="disabilities" className="flex flex-col items-start">
+        <div className="font-semibold">Disabilities:</div>
+        <div className="text-xs text-muted-foreground">
+          comma-separated (e.g. short-sighted, deaf etc.)
+        </div>
+      </Label>
+      <Textarea
+        id="disabilities"
+        value={formData.disabilities || ""}
+        onChange={(e) => updateFormData("disabilities", e.target.value)}
+        className="glass"
+      />
+    </div>
+    <div className="flex flex-col gap-3">
+      <Label htmlFor="medical_conditions" className="flex flex-col items-start">
+        <div className="font-semibold">Health conditions:</div>
+        <div className="text-xs text-muted-foreground">
+          comma-separated (e.g. hypertension, athsma etc.)
+        </div>
+      </Label>
+      <Textarea
+        id="medical_conditions"
+        value={formData.medical_conditions || ""}
+        onChange={(e) => updateFormData("medical_conditions", e.target.value)}
+        className="glass"
+      />
+    </div>
+  </div>
+);
+
+const Step6 = ({ step, formData, updateFormData }: StepProps) => (
+  <div className="space-y-8">
+    <div className="flex items-center gap-2">
+      <step.icon className="h-5 w-5 text-primary" />
+      <h3 className="font-semibold">{step.title}</h3>
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label className="flex flex-col items-start">
+        <div className="font-semibold">Enable Tracking</div>
+        <div className="text-xs text-muted-foreground">
+          Allow the tracking of meals and exercises.
+        </div>
+      </Label>
+      <Switch
+        checked={formData.tracking_enabled}
+        onCheckedChange={(checked) =>
+          updateFormData("tracking_enabled", checked)
+        }
+      />
+    </div>
+
+    <div className="flex items-center justify-between gap-4">
+      <Label className="flex flex-col items-start">
+        <div className="font-semibold">Enable Notifications</div>
+        <div className="text-xs text-muted-foreground">
+          Allow app to send notificaitons.
+        </div>
+      </Label>
+      <Switch
+        checked={formData.notifications_enabled}
+        onCheckedChange={(checked) =>
+          updateFormData("notifications_enabled", checked)
+        }
+      />
+    </div>
   </div>
 );

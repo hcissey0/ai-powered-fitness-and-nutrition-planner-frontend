@@ -37,6 +37,7 @@ type RefreshableDataType =
 interface DataContextType {
   plans: FitnessPlan[];
   activePlan: FitnessPlan | null;
+  trackingEnabled: boolean;
   progress: Progress[];
   weeklyProgress: Progress[];
   workoutTracking: WorkoutTracking[];
@@ -136,7 +137,7 @@ const refresh = useCallback(
         setOnboardingOpen(true);
         setDataLoading(false);
       } else {
-        refresh("all-data").finally(() => setDataLoading(false));
+        refresh("all-data", {showErrorToast: false}).finally(() => setDataLoading(false));
       }
     }
   }, [isAuthenticated, user, refresh]);
@@ -145,6 +146,10 @@ const refresh = useCallback(
      () => plans.find((p) => p.is_active) || null,
      [plans]
    );
+
+
+   const trackingEnabled = useMemo(() => user?.profile?.tracking_enabled, [user]);
+
 
    const weeklyProgress = useMemo(() => {
      const today = new Date();
@@ -256,6 +261,7 @@ const refresh = useCallback(
      litres_consumed?: number
    ) => {
      try {
+      if (!trackingEnabled) throw new Error("Tracking disabled");
        const date = new Date().toISOString().split("T")[0];
        if (action === "untrack" && trackingId) {
          const actionMap = {
@@ -322,6 +328,7 @@ const refresh = useCallback(
       value={{
         plans,
         activePlan,
+        trackingEnabled,
         progress,
         weeklyProgress,
         workoutTracking,
@@ -343,7 +350,7 @@ const refresh = useCallback(
         open={isGeneratePlanOpen}
         onClose={() => setInternalGeneratePlanOpen(false)}
         onPlanGenerated={() => {
-          refresh("all-data");
+          refresh("all-data", {showErrorToast:false});
           setInternalGeneratePlanOpen(false);
         }}
       />
@@ -354,7 +361,7 @@ const refresh = useCallback(
           setOnboardingOpen(false);
           refreshUser().then((updatedUser: User | null) => {
             if (updatedUser?.profile) {
-              refresh("all-data");
+              refresh("all-data", {showErrorToast: false});
             }
           });
         }}

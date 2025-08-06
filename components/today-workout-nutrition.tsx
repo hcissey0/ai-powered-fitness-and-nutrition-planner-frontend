@@ -13,6 +13,7 @@ import { Progress } from "./ui/progress";
 import { MealCard } from "./cards/meal-card";
 import { ExerciseCard } from "./cards/exercise-card";
 import { WaterIntakeCard } from "./cards/water-intake-card";
+import { Trophy } from "lucide-react";
 
 
 
@@ -47,8 +48,9 @@ export function TodayWorkoutNutrition() {
  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols- gap-6">
-      <Card className="glas lg:col-span- border-none bg-transparent shadow-none">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* current meal */}
+      <Card className="glas lg:col-span-3 border-none bg-transparent shadow-none">
         <CardHeader>
           <CardTitle className="text-xl">Current Meal</CardTitle>
           <CardDescription>
@@ -63,25 +65,27 @@ export function TodayWorkoutNutrition() {
           {(() => {
             const currentMealType = getCurrentMealType();
             return todayNutrition.meals
-            .filter((meal) => meal.meal_type === currentMealType)
-            .map((meal) => {
-              const trackedItem = mealTracking.find((t) => t.meal === meal.id);
-              return (
-                <MealCard
-                meal={meal}
-                isTracked={!!trackedItem}
-
-                onTrack={() =>
-                  track(
-                    trackedItem ? "untrack" : "track",
-                    "meal",
-                    meal.id,
-                    trackedItem?.id
-                  )
-                }
-                />
-              )
-            })
+              .filter((meal) => meal.meal_type === currentMealType)
+              .map((meal) => {
+                const trackedItem = mealTracking.find(
+                  (t) => t.meal === meal.id
+                );
+                return (
+                  <MealCard
+                  key={meal.id}
+                    meal={meal}
+                    isTracked={!!trackedItem}
+                    onTrack={() =>
+                      track(
+                        trackedItem ? "untrack" : "track",
+                        "meal",
+                        meal.id,
+                        trackedItem?.id
+                      )
+                    }
+                  />
+                );
+              });
           })()}
 
           {/* {todayNutrition.meals.map((meal) => {
@@ -105,22 +109,25 @@ export function TodayWorkoutNutrition() {
         </CardContent>
       </Card>
 
-      {/* <div className="space-y-6"></div> */}
+      {/* water intake */}
       <WaterIntakeCard
-          nutrition={todayNutrition}
-          stats={todayStats}
-          onTrack={(litres) =>
-            track(
-              "track",
-              "water",
-              todayNutrition.id,
-              undefined,
-              undefined,
-              litres
-            )
-          }
-        />
-        <Card className="glas border-none bg-transparent shadow-none">
+        nutrition={todayNutrition}
+        stats={todayStats}
+        onTrack={(litres) =>
+          track(
+            "track",
+            "water",
+            todayNutrition.id,
+            undefined,
+            undefined,
+            litres
+          )
+        }
+      />
+
+      {/* current workout */}
+      {!todayWorkout.is_rest_day ? (
+        <Card className="glas lg:col-span-4 border-none bg-transparent shadow-none">
           <CardHeader>
             <CardTitle className="text-xl">Today's Workout</CardTitle>
             <CardDescription>{todayWorkout.description}</CardDescription>
@@ -155,8 +162,15 @@ export function TodayWorkoutNutrition() {
             })}
           </CardContent>
         </Card>
-        
-      
+      ) : (
+        <Card className="glass lg:col-span-4 text-center p-8 flex flex-col items-center justify-center">
+          <Trophy className="w-16 h-16 text-yellow-500 mb-4" />
+          <h3 className="text-xl font-bold">Rest Day</h3>
+          <p className="text-muted-foreground">
+            Time to recover and grow stronger.
+          </p>
+        </Card>
+      )}
     </div>
   );
 }

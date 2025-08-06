@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import { useData } from "@/context/data-context";
 
 const mealIcons = {
   breakfast: "🌅",
@@ -20,10 +21,13 @@ export function MealCard({
   isTracked: boolean;
   onTrack: () => void;
 }) {
+  const { trackingEnabled } = useData();
   return (
     <Card
       className={`transition-all ${
-        isTracked ? "bg-transparent border-dashed border-muted" : "glass hover:border-primary/50"
+        isTracked
+          ? "bg-transparent border-dashed border-muted"
+          : "glass hover:border-primary/50"
       }`}
     >
       <CardContent className="flex flex-col p-4">
@@ -58,19 +62,21 @@ export function MealCard({
               </div>
             )}
           </div>
+          {trackingEnabled && 
           <Button
-            size="sm"
-            variant={isTracked ? "ghost" : "default"}
-            onClick={onTrack}
-            className={`rounded-full w-24 ${
-              isTracked
-                ? "border-green-500 text-green-500"
-                : "bg-green-600 hover:bg-green-700 text-white"
+          size="sm"
+          variant={isTracked ? "ghost" : "default"}
+          onClick={onTrack}
+          className={`rounded-full w-24 ${
+            isTracked
+            ? "border-green-500 text-green-500"
+            : "bg-green-600 hover:bg-green-700 text-foreground"
             }`}
-          >
+            >
             {isTracked ? <Check className="mr-2 h-4 w-4" /> : null}
             {isTracked ? "Tracked" : "Track"}
           </Button>
+          }
         </div>
         {!isTracked && (
           <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
