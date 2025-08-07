@@ -1,9 +1,10 @@
-import { Meal } from "@/interfaces";
-import { Check } from "lucide-react";
+import { Meal, MealTracking } from "@/interfaces";
+import { Check, Loader2 } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { useData } from "@/context/data-context";
+import { useState } from "react";
 
 const mealIcons = {
   breakfast: "🌅",
@@ -14,14 +15,33 @@ const mealIcons = {
 
 export function MealCard({
   meal,
-  isTracked,
+  trackedMeal,
   onTrack,
 }: {
   meal: Meal;
-  isTracked: boolean;
-  onTrack: () => void;
+  trackedMeal?: MealTracking;
+  onTrack?: () => void;
 }) {
-  const { trackingEnabled } = useData();
+  const { track, settings } = useData();
+  const [isTracking, setIsTracking] = useState(false);
+
+  const isTracked = !!trackedMeal;
+  const handleTrack = async () => {
+    try {
+      setIsTracking(true)
+      await track(isTracked ? "untrack" : 'track',
+        'meal',
+        meal.id,
+        trackedMeal?.id as number,
+        0, 0, 0
+      )
+    } catch (e) {
+
+    } finally {
+      setIsTracking(false)
+    }
+    if (onTrack) onTrack();
+  }
   return (
     <Card
       className={`transition-all ${
@@ -62,21 +82,33 @@ export function MealCard({
               </div>
             )}
           </div>
-          {trackingEnabled && 
-          <Button
-          size="sm"
-          variant={isTracked ? "ghost" : "default"}
-          onClick={onTrack}
-          className={`rounded-full w-24 ${
-            isTracked
-            ? "border-green-500 text-green-500"
-            : "bg-green-600 hover:bg-green-700 text-foreground"
-            }`}
+          {settings.trackingEnabled && (
+            <Button
+              size="sm"
+              variant={isTracked ? "ghost" : "default"}
+              onClick={handleTrack}
+              className={`rounded-full w-24 ${
+                isTracked
+                  ? "border-green-500 text-green-500"
+                  : "bg-green-600 hover:bg-green-700 text-foreground"
+              }`}
             >
-            {isTracked ? <Check className="mr-2 h-4 w-4" /> : null}
-            {isTracked ? "Tracked" : "Track"}
-          </Button>
-          }
+              {isTracking ?
+              (   
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                isTracked ?
+                <Check className="mr-2 h-4 w-4" />
+                : null
+              )}
+              {isTracking ? (
+                ""
+              ) : (
+                isTracked ? "Tracked" : "Track"
+              )}
+              
+            </Button>
+          )}
         </div>
         {!isTracked && (
           <div className="mt-3 grid grid-cols-3 gap-2 text-sm">

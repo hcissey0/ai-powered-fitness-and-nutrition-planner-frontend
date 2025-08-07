@@ -27,7 +27,9 @@ export interface Profile {
     | null;
   goal: "weight_loss" | "maintenance" | "muscle_gain" | 'endurance' | null;
   dietary_preferences: string;
-  notifications_enabled: boolean;
+  notification_reminders_enabled: boolean;
+  email_reminders_enabled: boolean;
+  minutes_before_email_reminder: number;
   tracking_enabled: boolean;
 
   allergies: string | null;
@@ -43,6 +45,18 @@ export interface Profile {
   medical_conditions_list: string[];
   dietary_preferences_list: string[];
 
+  time_zone: string;
+  breakfast_time: string;
+  lunch_time: string;
+  dinner_time: string;
+  snack_time: string;
+  workout_time: string;
+
+  connected_to_google_account: boolean;
+
+  track_after_rest_timer: boolean;
+  start_rest_timer_after_exercise: boolean;
+
   bmi: number | null;
   created_at: string;
   updated_at: string;
@@ -53,6 +67,8 @@ export interface FitnessPlan {
   profile: number; // API might return just the ID
   start_date: string;
   end_date: string;
+  workout_added_to_calendar: boolean;
+  nutrition_added_to_calendar: boolean;
   goal_at_creation: string;
   is_active: boolean;
   ai_prompt_text: string;
@@ -77,6 +93,9 @@ export interface Exercise {
   workout_day: number;
   name: string;
   sets: number;
+  met_value: number;
+  duration_mins: number;
+  calories_to_burn: number;
   reps: string;
   rest_period_seconds: number;
   notes?: string;
@@ -113,6 +132,7 @@ export interface WorkoutTracking {
   exercise_name: string; // Denormalized for easy display
   exercise_sets: number; // Denormalized for easy display
   date_completed: string;
+  calories_burned: number;
   sets_completed: number;
   notes?: string;
   created_at: string;
@@ -157,6 +177,8 @@ export interface DayStats {
   meals_logged: number;
   total_meals: number;
   calories_consumed: number;
+  calories_burned: number;
+  calories_to_burn: number;
   target_calories: number;
   water_intake: number;
   target_water: number;

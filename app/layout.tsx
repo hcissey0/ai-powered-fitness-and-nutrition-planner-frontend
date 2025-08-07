@@ -59,7 +59,7 @@ export default function RootLayout({
       <body
         className={`${spaceMono.className} ${spaceMono.variable} antialiased`}
       >
-        <GoogleOAuthProvider  clientId={googleClientId as string}>
+        <GoogleOAuthProvider clientId={googleClientId as string}>
         <ApiStatus />
 
         <AuthProvider>

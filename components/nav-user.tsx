@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LogOut,
   User2Icon,
+  UserCog2,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
@@ -113,8 +114,8 @@ export function NavUser() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/u/profile">
-                  <User2Icon className="mr-2 h-4 w-4" />
-                  <span>Profile Settings</span>
+                  <UserCog2 className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

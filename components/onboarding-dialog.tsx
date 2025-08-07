@@ -33,6 +33,8 @@ import {
   HeartPulseIcon,
   CheckCircle,
   IconNode,
+  Timer,
+  Dumbbell,
 } from "lucide-react";
 import ImageUploadAvatar from "./image-upload-avatar";
 import { Textarea } from "./ui/textarea";
@@ -63,6 +65,7 @@ const steps: Step[] = [
   { id: 4, title: "Dietary Preferences", icon: Utensils },
   { id: 5, title: "Didsabilities & Health Conditions", icon: HeartPulseIcon },
   { id: 6, title: "Tracking & Notification", icon: CheckCircle },
+  { id: 7, title: "Timings", icon: Timer},
 ];
 
 export function OnboardingDialog({
@@ -98,6 +101,8 @@ export function OnboardingDialog({
       case 4:
       case 5:
       case 6:
+      case 7:
+      case 8:
         return true; // The rest are optional
       default:
         return false;
@@ -220,6 +225,13 @@ export function OnboardingDialog({
                   step={steps.find((s) => s.id === currentStep) as any}
                   formData={formData}
                   updateFormData={updateFormData}
+                />
+              )}
+              {currentStep === 7 && (
+                <Step7
+                step={steps.find((s) => s.id === currentStep) as any}
+                formData={formData}
+                updateFormData={updateFormData}
                 />
               )}
             </motion.div>
@@ -534,20 +546,179 @@ const Step6 = ({ step, formData, updateFormData }: StepProps) => (
         }
       />
     </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label className="flex flex-col items-start">
+        <div className="font-semibold">Track after rest timer</div>
+        <div className="text-xs text-muted-foreground">
+          Automatically track exercise after rest timer goes off.
+        </div>
+      </Label>
+      <Switch
+        disabled={!formData.tracking_enabled}
+        checked={formData.track_after_rest_timer}
+        onCheckedChange={(checked) =>
+          updateFormData("track_after_rest_timer", checked)
+        }
+      />
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label className="flex flex-col items-start">
+        <div className="font-semibold">Start rest timer after exercise</div>
+        <div className="text-xs text-muted-foreground">
+          Automatically start the rest timer after the exercise timer.
+        </div>
+      </Label>
+      <Switch
+        disabled={!formData.tracking_enabled}
+        checked={formData.start_rest_timer_after_exercise}
+        onCheckedChange={(checked) =>
+          updateFormData("start_rest_timer_after_exercise", checked)
+        }
+      />
+    </div>
 
     <div className="flex items-center justify-between gap-4">
       <Label className="flex flex-col items-start">
         <div className="font-semibold">Enable Notifications</div>
         <div className="text-xs text-muted-foreground">
-          Allow app to send notificaitons.
+          Allow Google Calender to send notificaitons when connected.
         </div>
       </Label>
       <Switch
-        checked={formData.notifications_enabled}
+        checked={formData.notification_reminders_enabled}
         onCheckedChange={(checked) =>
-          updateFormData("notifications_enabled", checked)
+          updateFormData("notification_reminders_enabled", checked)
         }
       />
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label className="flex flex-col items-start">
+        <div className="font-semibold">Enable Email Reminders</div>
+        <div className="text-xs text-muted-foreground">
+          Allow Google Calender to send email reminders when connected.
+        </div>
+      </Label>
+      <Switch
+        checked={formData.email_reminders_enabled}
+        onCheckedChange={(checked) =>
+          updateFormData("email_reminders_enabled", checked)
+        }
+      />
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label className="flex flex-col items-start">
+        <div className="font-semibold">Time Before Email Reminders</div>
+        <div className="text-xs text-muted-foreground">
+          Time to be notified before the Nutrition or Workout Event.
+        </div>
+      </Label>
+      <Input
+      disabled={!formData.email_reminders_enabled}
+      className="glass max-w-20"
+      type="number"
+      min={1}
+      step={1}
+      value={formData.minutes_before_email_reminder}
+      defaultValue={30}
+      onChange={(e)=> updateFormData('minutes_before_email_reminder', e.target.value)}
+      />
+      
+    </div>
+  </div>
+);
+
+const Step7 = ({ step, formData, updateFormData }: StepProps) => (
+  <div className="space-y-8">
+    <div className="flex items-center gap-2">
+      <step.icon className="h-5 w-5 text-primary" />
+      <h3 className="font-semibold">{step.title}</h3>
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label className="flex flex-col font-bold items-start">
+        🌅 BreakFast Time:
+      </Label>
+      <div className="flex justify-end">
+        <Input
+          type="time"
+          id="breakfast_time"
+          step="1"
+          defaultValue="08:00:00"
+          onChange={(e) => updateFormData("breakfast_time", e.target.value)}
+          className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+        />
+      </div>
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label
+        htmlFor="lunch_time"
+        className="flex flex-col items-start font-bold"
+      >
+        ☀️ Lunch Time:
+      </Label>
+      <div className="flex justify-end">
+        <Input
+          type="time"
+          id="lunch_time"
+          step="1"
+          defaultValue="12:00:00"
+          onChange={(e) => updateFormData("lunch_time", e.target.value)}
+          className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+        />
+      </div>
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label
+        htmlFor="snack_time"
+        className="flex flex-col items-start font-bold"
+      >
+        🍎 Snack Time:
+      </Label>
+      <div className="flex justify-end">
+        <Input
+          type="time"
+          id="snack_time"
+          step="1"
+          defaultValue="14:00:00"
+          onChange={(e) => updateFormData("snack_time", e.target.value)}
+          className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+        />
+      </div>
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label
+        htmlFor="dinner_time"
+        className="flex flex-col items-start font-bold"
+      >
+        🌙 Dinner Time:
+      </Label>
+      <div className="flex justify-end">
+        <Input
+          type="time"
+          id="dinner_time"
+          step="1"
+          defaultValue="18:00:00"
+          onChange={(e) => updateFormData("dinner_time", e.target.value)}
+          className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+        />
+      </div>
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <Label
+        htmlFor="workout_time"
+        className="flex gap-2 items-start font-bold"
+      >
+        <Dumbbell className="w-4 h-4 text-primary"/> Workout Time:
+      </Label>
+      <div className="flex justify-end">
+        <Input
+          type="time"
+          id="workout_time"
+          step="1"
+          defaultValue="17:00:00"
+          onChange={(e) => updateFormData("workout_time", e.target.value)}
+          className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+        />
+      </div>
     </div>
   </div>
 );

@@ -32,6 +32,8 @@ import { ExerciseTimer } from "@/components/exercise-timer";
 import { useData } from "@/context/data-context";
 import { MealCard } from "@/components/cards/meal-card";
 import { ExerciseCard } from "@/components/cards/exercise-card";
+import { addPlanToGoogleCalendar } from "@/lib/api-service";
+import PlanToCalendar from "@/components/plan-to-calendar";
 
 const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const fullDayNames = [
@@ -112,9 +114,12 @@ function PlanSelector({
         ))}
       </div>
       {selectedPlan && (
-        <Button onClick={handleDeletePlan} variant="destructive" size="sm">
-          <Ban className="h-4 w-4 mr-2" /> Delete Selected Plan
-        </Button>
+        <div className="flex justify-around">
+          <PlanToCalendar plan={selectedPlan} />
+          <Button onClick={handleDeletePlan} variant="destructive" size="sm">
+            <Ban className="h-4 w-4 mr-2" /> Delete Selected Plan
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -417,8 +422,9 @@ function NutritionStats({
                 "track",
                 "water",
                 currentNutrition.id,
-                undefined,
-                undefined,
+                0,
+                0,
+                0,
                 0.25
               )
             }
@@ -502,15 +508,8 @@ function NutritionPlanView({ plan }: { plan: FitnessPlan }) {
             <MealCard
               key={meal.id}
               meal={meal}
-              isTracked={!!trackedItem}
-              onTrack={() =>
-                track(
-                  trackedItem ? "untrack" : "track",
-                  "meal",
-                  meal.id,
-                  trackedItem?.id
-                )
-              }
+              trackedMeal={trackedItem}
+              
             />
           );
         })}
@@ -572,15 +571,7 @@ function WorkoutPlanView({ plan }: { plan: FitnessPlan }) {
               <ExerciseCard
                 key={exercise.id}
                 exercise={exercise}
-                isTracked={!!trackedItem}
-                onTrack={() =>
-                  track(
-                    trackedItem ? "untrack" : "track",
-                    "workout",
-                    exercise.id,
-                    trackedItem?.id
-                  )
-                }
+                trackedExercise={trackedItem}
               />
             );
           })

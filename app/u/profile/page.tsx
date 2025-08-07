@@ -1,7 +1,7 @@
 // /u/profile/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -23,7 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Settings, Activity, Save, Target, Loader2, Utensils, HeartPulseIcon, CheckCircle, Trash } from "lucide-react";
+import { User, Settings, Activity, Save, Target, Loader2, Utensils, HeartPulseIcon, CheckCircle, Trash, UserCog2, Timer, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 import { updateProfile, updateUser } from "@/lib/api-service";
 import { Profile, User as UserInterface } from "@/interfaces";
@@ -33,6 +33,8 @@ import ImageUploadAvatar from "@/components/image-upload-avatar";
 import { handleApiError } from "@/lib/error-handler";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import _ from 'lodash';
+
 
 interface Step {
   id: number;
@@ -62,6 +64,8 @@ export default function ProfilePage() {
   const [userDetails, setUserDetails] = useState<Partial<UserDetails>>({});
   const [profileData, setProfileData] = useState<Partial<Profile>>({});
 
+  const originalProfileData = useMemo(() => user?.profile, [user])
+
   useEffect(() => {
     if (user) {
       setUserDetails({
@@ -71,6 +75,7 @@ export default function ProfilePage() {
         email: user.email || "",
       });
       if (user.profile) {
+        console.log(user)
         setProfileData(user.profile);
       }
     }
@@ -117,7 +122,10 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Profile Settings</h1>
+        <h1 className="text-3xl flex gap-4 items-center font-bold">
+          <UserCog2 className="h-9 w-9 text-primary" />
+          Profile & Settings
+        </h1>
         <p className="text-muted-foreground">
           Manage your account and fitness preferences.
         </p>
@@ -322,6 +330,7 @@ export default function ProfilePage() {
                     "lightly_active",
                     "moderately_active",
                     "very_active",
+                    "athlete",
                   ].map((level) => (
                     <Label
                       key={level}
@@ -342,7 +351,12 @@ export default function ProfilePage() {
                   onValueChange={(v) => handleProfileChange("goal", v)}
                   className="space-y-1"
                 >
-                  {["weight_loss", "maintenance", "muscle_gain"].map((goal) => (
+                  {[
+                    "weight_loss",
+                    "maintenance",
+                    "muscle_gain",
+                    "endurance",
+                  ].map((goal) => (
                     <Label
                       key={goal}
                       className="flex items-center gap-2 p-2 rounded-md hover:bg-accent cursor-pointer"
@@ -359,7 +373,7 @@ export default function ProfilePage() {
           </Card>
         </div>
 
-        <div className="lg:col-span-3 lg:grid lg:grid-cols-2 gap-6">
+        <div className="lg:col-span-3 flex flex-col lg:grid lg:grid-cols-2 gap-6">
           {/* Dietary Preferences */}
           <Card className="glass">
             <CardHeader>
@@ -500,8 +514,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 justify-around">
-        
+      <div className="grid gap-6 lg:grid-cols-2">
         <div className="flex items-center justify-between gap-4 glass p-5 rounded-xl">
           <Label className="flex flex-col items-start">
             <div className="font-semibold">Enable Tracking</div>
@@ -519,18 +532,186 @@ export default function ProfilePage() {
 
         <div className="flex items-center justify-between gap-4 glass p-5 rounded-xl">
           <Label className="flex flex-col items-start">
-            <div className="font-semibold">Enable Notifications</div>
+            <div className="font-semibold">Track after rest timer</div>
             <div className="text-xs text-muted-foreground">
-              Allow app to send notificaitons.
+              Automatically track exercise after rest timer goes off.
             </div>
           </Label>
           <Switch
-            checked={profileData.notifications_enabled}
+            disabled={!profileData.tracking_enabled}
+            checked={profileData.track_after_rest_timer}
             onCheckedChange={(checked) =>
-              handleProfileChange("notifications_enabled", checked)
+              handleProfileChange("track_after_rest_timer", checked)
             }
           />
         </div>
+        <div className="flex items-center justify-between gap-4 glass p-5 rounded-xl">
+          <Label className="flex flex-col items-start">
+            <div className="font-semibold">Start rest timer after exercise</div>
+            <div className="text-xs text-muted-foreground">
+              Automatically track exercise after rest timer goes off.
+            </div>
+          </Label>
+          <Switch
+            disabled={!profileData.tracking_enabled}
+            checked={profileData.start_rest_timer_after_exercise}
+            onCheckedChange={(checked) =>
+              handleProfileChange("start_rest_timer_after_exercise", checked)
+            }
+          />
+        </div>
+        <div className="flex items-center justify-between gap-4 glass p-5 rounded-xl">
+          <Label className="flex flex-col items-start">
+            <div className="font-semibold">Enable Calendar Notifications</div>
+            <div className="text-xs text-muted-foreground">
+              Allow Google Calendar to send notifications.
+            </div>
+          </Label>
+          <Switch
+            checked={profileData.notification_reminders_enabled}
+            onCheckedChange={(checked) =>
+              handleProfileChange("notification_reminders_enabled", checked)
+            }
+          />
+        </div>
+        <div className="flex items-center justify-between gap-4 glass p-5 rounded-xl">
+          <Label className="flex flex-col items-start">
+            <div className="font-semibold">Enable Email Reminders</div>
+            <div className="text-xs text-muted-foreground">
+              Allow Google Calendar to send Email on Nutrition and Workout plans added.
+            </div>
+          </Label>
+          <Switch
+            checked={profileData.email_reminders_enabled}
+            onCheckedChange={(checked) =>
+              handleProfileChange("email_reminders_enabled", checked)
+            }
+          />
+        </div>
+        <div className="flex items-center justify-between gap-4 glass p-5 rounded-xl">
+          <Label className="flex flex-col items-start">
+            <div className="font-semibold">Time before Email Notification</div>
+            <div className="text-xs text-muted-foreground">
+              Time before Google Calendar to send Email for a Workout or Nutrition event.
+            </div>
+          </Label>
+          <Input 
+          disabled={!profileData.email_reminders_enabled}
+          type="number"
+          min={1}
+          step={1}
+          value={profileData.minutes_before_email_reminder}
+          // defaultValue={30}
+          onChange={(e) => handleProfileChange('minutes_before_email_reminder', e.target.value)}
+          className="glass max-w-20"
+          />
+          
+        </div>
+      </div>
+
+      <div>
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-4 text-primary" /> Timings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid lg:grid-cols-2 gap-6">
+            <div className="flex items-center justify-between gap-4">
+              <Label className="flex flex-col font-bold items-start">
+                🌅 BreakFast Time:
+              </Label>
+              <div className="flex justify-end">
+                <Input
+                  type="time"
+                  id="breakfast_time"
+                  step="1"
+                  defaultValue={profileData.breakfast_time}
+                  onChange={(e) =>
+                    handleProfileChange("breakfast_time", e.target.value)
+                  }
+                  className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label
+                htmlFor="lunch_time"
+                className="flex flex-col items-start font-bold"
+              >
+                ☀️ Lunch Time:
+              </Label>
+              <div className="flex justify-end">
+                <Input
+                  type="time"
+                  id="lunch_time"
+                  step="1"
+                  defaultValue={profileData.lunch_time}
+                  onChange={(e) => handleProfileChange("lunch_time", e.target.value)}
+                  className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label
+                htmlFor="snack_time"
+                className="flex flex-col items-start font-bold"
+              >
+                🍎 Snack Time:
+              </Label>
+              <div className="flex justify-end">
+                <Input
+                  type="time"
+                  id="snack_time"
+                  step="1"
+                  defaultValue={profileData.snack_time}
+                  onChange={(e) => handleProfileChange("snack_time", e.target.value)}
+                  className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label
+                htmlFor="dinner_time"
+                className="flex flex-col items-start font-bold"
+              >
+                🌙 Dinner Time:
+              </Label>
+              <div className="flex justify-end">
+                <Input
+                  type="time"
+                  id="dinner_time"
+                  step="1"
+                  defaultValue={profileData.dinner_time}
+                  onChange={(e) =>
+                    handleProfileChange("dinner_time", e.target.value)
+                  }
+                  className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label
+                htmlFor="workout_time"
+                className="flex gap-2 items-start font-bold"
+              >
+                <Dumbbell className="w-4 h-4 text-primary" /> Workout Time:
+              </Label>
+              <div className="flex justify-end">
+                <Input
+                  type="time"
+                  id="workout_time"
+                  step="1"
+                  defaultValue={profileData.workout_time}
+                  onChange={(e) =>
+                    handleProfileChange("workout_time", e.target.value)
+                  }
+                  className="glass appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Separator />
@@ -538,61 +719,59 @@ export default function ProfilePage() {
       <div className="flex justify-between">
         <Dialog>
           <DialogTrigger asChild>
-        <Button
-        variant={'destructive'}
-        className="bg-red-500 text-foreground"
-        >
-          <Trash />
-          Delete Account
-        </Button>
-            
+            <Button
+              variant={"destructive"}
+              className="bg-red-500 text-foreground"
+            >
+              <Trash />
+              Delete Account
+            </Button>
           </DialogTrigger>
           <DialogContent className="glass">
             <DialogHeader>
-
-            <DialogTitle>
-              Are you sure you want to delete your account?
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              This action is irreversible
-            </DialogDescription>
+              <DialogTitle>
+                Are you sure you want to delete your account?
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                This action is irreversible
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <Label>
-                Type your email to confirm
-              </Label>
-              <Input 
-              className="glass"
-              value={confirmDeleteEmail}
-              onChange={(e)=> setConfirmDeleteEmail(e.target.value)}
+              <Label>Type your email to confirm</Label>
+              <Input
+                className="glass"
+                value={confirmDeleteEmail}
+                onChange={(e) => setConfirmDeleteEmail(e.target.value)}
               />
             </div>
             <DialogFooter className="flex justify-between">
               <DialogClose asChild>
-              <Button variant={'default'}
-               className="bg-transparent hover:bg-primary-700 text-foreground">
-                Cancel
-              </Button>
+                <Button
+                  variant={"default"}
+                  className="bg-transparent hover:bg-primary-700 text-foreground"
+                >
+                  Cancel
+                </Button>
               </DialogClose>
               <Button
-              onClick={async () => {
-                await deleteMyAccount();
-            toast.success("Account deleted successfully")
-              }}
-              variant={'destructive'}
-              className="bg-red-500 hover:bg-red-900 text-foreground"
-              disabled={!(userDetails.email === confirmDeleteEmail)}
+                onClick={async () => {
+                  await deleteMyAccount();
+                  toast.success("Account deleted successfully");
+                }}
+                variant={"destructive"}
+                className="bg-red-500 hover:bg-red-900 text-foreground"
+                disabled={!(userDetails.email === confirmDeleteEmail)}
               >
                 Delete
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        
+
         <Button
           onClick={handleSave}
-          disabled={isLoading}
-          className="cyber-button min-w-40 self-end"
+          disabled={isLoading || _.isEqual(originalProfileData, profileData)}
+          className="cyber-button text-foreground min-w-40 self-end"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

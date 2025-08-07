@@ -1,19 +1,47 @@
-import { Check, Clock, X } from "lucide-react";
+import { Check, Clock, Dumbbell, Flame, Loader2, X } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { ExerciseTimer } from "../exercise-timer";
 import { useData } from "@/context/data-context";
+import { Exercise, WorkoutTracking } from "@/interfaces";
+import { useState } from "react";
 
 export function ExerciseCard({
   exercise,
-  isTracked,
+  trackedExercise,
   onTrack,
 }: {
   exercise: any;
-  isTracked: boolean;
-  onTrack: () => void;
+  trackedExercise?: WorkoutTracking;
+  onTrack?: () => void;
 }) {
-  const { trackingEnabled } = useData()
+  const { track, settings } = useData();
+  const [isTracking, setIsTracking] = useState(false);
+
+  const isTracked = !!trackedExercise;
+
+  const handleTrack = async () => {
+    try {
+      setIsTracking(true);
+      await track(isTracked ? 'untrack' : 'track',
+        'workout',
+        exercise.id,
+        trackedExercise?.id as number,
+        exercise.sets,
+        exercise.calories_to_burn,
+        0
+      );
+      if (onTrack) {
+        onTrack();
+      }
+    } catch(e) {
+
+    } finally {
+      setIsTracking(false);
+    }
+  }
+
+
   return (
     <Card
       className={`transition-all ${
@@ -31,13 +59,21 @@ export function ExerciseCard({
           >
             {exercise.name}
           </h4>
-          {!isTracked && (
+          {!trackedExercise && (
             <>
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <span>{exercise.sets} sets</span>
                 <span>{exercise.reps} reps</span>
                 <span className="flex items-center space-x-1">
-                  <Clock className="h-3 w-3" />
+                  <Flame className="h-3 w-3 text-rose-400" />
+                  <span>{exercise.calories_to_burn}kcal</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <Dumbbell className="h-3 w-3 text-red-400" />
+                  <span>{exercise.duration_mins}mins</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <Clock className="h-3 w-3 text-primary" />
                   <span>{exercise.rest_period_seconds}s rest</span>
                 </span>
               </div>
@@ -51,23 +87,39 @@ export function ExerciseCard({
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           {!isTracked && (
+            <div>
+
+              <ExerciseTimer
+              type="exercise"
+              
+              exercise={exercise}
+              
+              />
             <ExerciseTimer
-              exerciseName={exercise.name}
-              restPeriodSeconds={exercise.rest_period_seconds}
-            />
+            type="rest"
+            
+              exercise={exercise}
+              
+              />
+              </div>
           )}
-          {trackingEnabled && 
+          {settings.trackingEnabled && 
           <Button
           size="icon"
           variant={isTracked ? "ghost" : "default"}
-          onClick={onTrack}
+          onClick={handleTrack}
           className={`rounded-full ${
             isTracked
             ? "text-green-500 bg-green-500/10 hover:bg-green-500/20"
             : "bg-green-600 hover:bg-green-700 text-foreground"
             }`}
             >
-            {isTracked ? <X /> : <Check />}
+              {isTracking ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ): (
+                isTracked ? <X /> : <Check />
+              )}
+            {/* {isTracked ? <X /> : <Check />} */}
           </Button>
           }
         </div>

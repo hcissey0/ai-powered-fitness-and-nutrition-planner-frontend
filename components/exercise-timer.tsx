@@ -1,12 +1,15 @@
 // components/exercise-timer.tsx
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { beep } from "@/lib/utils"; // ✅ Import our beep function
+import { Exercise } from "@/interfaces";
+import { useData } from "@/context/data-context";
+import { handleApiError } from "@/lib/error-handler";
 
 function TimerToastContent({
   exerciseName,
@@ -73,22 +76,23 @@ function TimerToastContent({
 }
 
 interface ExerciseTimerProps {
-  exerciseName: string;
-  restPeriodSeconds: number;
+  type: 'rest'| 'exercise';
+  exercise: Exercise;
   className?: string;
   onTimerComplete?: (exerciseName: string) => void;
   playSound?: boolean;
 }
 
 export function ExerciseTimer({
-  exerciseName,
-  restPeriodSeconds,
+  type,
+  exercise,
   className,
   onTimerComplete,
   playSound = true,
 }: ExerciseTimerProps) {
   const [isActive, setIsActive] = useState(false);
   const toastIdRef = useRef<string | number | null>(null);
+  const {settings, track} = useData();
 
   const handleTimerComplete = () => {
     setIsActive(false);
@@ -97,7 +101,18 @@ export function ExerciseTimer({
     // Final beep
     if (playSound) beep(660, 300);
 
-    if (onTimerComplete) onTimerComplete(exerciseName);
+    if (onTimerComplete) onTimerComplete(exercise.name);
+    
+    if (settings.startRestTimerAfterExercise && type === 'exercise') {
+      type = 'rest';
+      startTimer();
+    }
+    if (settings.trackingEnabled && settings.trackAfterRestTimer && type === 'rest') {
+      try {
+        track('track', 'workout', exercise.id, 0, exercise.sets, exercise.calories_to_burn, 0);
+      } catch (e) {
+      }
+    }
   };
 
   const handleTimerCancel = () => {
@@ -105,15 +120,19 @@ export function ExerciseTimer({
     if (toastIdRef.current) toast.dismiss(toastIdRef.current);
   };
 
+  const periodSeconds = useMemo(() => 
+  type === 'exercise' ? exercise.duration_mins * 60 : exercise.rest_period_seconds, [type])
+
+
   const startTimer = () => {
     if (isActive) return;
 
     setIsActive(true);
     toastIdRef.current = toast(
       <TimerToastContent
-        key={exerciseName} // ✅ unique key for React list
-        exerciseName={exerciseName}
-        initialSeconds={restPeriodSeconds}
+        key={exercise.name} // ✅ unique key for React list
+        exerciseName={exercise.name}
+        initialSeconds={periodSeconds}
         onComplete={handleTimerComplete}
         onCancel={handleTimerCancel}
         playSound={playSound}
@@ -129,12 +148,15 @@ export function ExerciseTimer({
       onClick={startTimer}
       disabled={isActive}
       className={cn(
-        "text-primary border-primary/50 hover:bg-primary/10 hover:text-primary",
+        `${type === 'exercise' ? 
+          "text-accent" : 
+          'text-primary hover:bg-primary'}`,
+        "",
         className
       )}
     >
       <Play className="h-4 w-4 mr-2" />
-      Timer
+      {type === 'exercise' ? `Ex. (${exercise.duration_mins}mins)` : `Rest (${exercise.rest_period_seconds}secs)`}
     </Button>
   );
 }

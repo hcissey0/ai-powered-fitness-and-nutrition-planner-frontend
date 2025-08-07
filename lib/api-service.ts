@@ -166,6 +166,18 @@ export const deleteMe = async (): Promise<void> => {
   await api.delete('/users/me/delete/');
 }
 
+export const addPlanToGoogleCalendar = async (plan_id: number, type: string = 'all')
+:Promise<{message: string, success_count: number, failure_count?: number}> => {
+  const res = await api.post<
+    { message: string, success_count: number, failure_count: number }>('/users/me/add-plan-to-calendar/',
+      {
+        plan_id,
+        type
+      }
+    )
+    return res.data;
+}
+
 export const loginWithGoogle = async (
   accessToken: string
 ): Promise<{ token: string; user: User }> => {

@@ -2,6 +2,7 @@
 import { useData } from "@/context/data-context";
 import { Dumbbell, Utensils, Droplets, Flame } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
+import PlanToCalendar from "./plan-to-calendar";
 
 const statCards = [
   {
@@ -20,9 +21,9 @@ const statCards = [
     color: "text-blue-400",
   },
   {
-    title: "Calories",
-    getValue: (stats: any) => stats.calories_consumed,
-    unit: (stats: any) => `of ${stats.target_calories} kcal`,
+    title: "Calories Burnt",
+    getValue: (stats: any) => stats.calories_burned,
+    unit: (stats: any) => `of ${stats.calories_to_burn} kcal`,
     icon: Flame,
     color: "text-orange-400",
   },
@@ -36,11 +37,12 @@ const statCards = [
 ];
 
 export function TodayStats() {
-  const { todayStats } = useData();
+  const { todayStats, activePlan } = useData();
 
-  if (!todayStats) return null;
+  if (!todayStats || !activePlan) return null;
 
   return (
+    <div>
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {statCards.map((stat, index) => (
         <Card key={index} className="glass">
@@ -63,5 +65,9 @@ export function TodayStats() {
         </Card>
       ))}
     </div>
+    <div className="mt-6">
+      <PlanToCalendar plan={activePlan} />
+      </div>
+      </div>
   );
 }

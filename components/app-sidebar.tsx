@@ -9,6 +9,7 @@ import {
   PencilRulerIcon,
   Plus,
   User2,
+  UserCog2,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -29,7 +30,7 @@ const navItems = [
   { name: "Dashboard", icon: LayoutDashboard, href: "/u" },
   { name: "Plans", icon: PencilRulerIcon, href: "/u/plans" },
   { name: "Progress", icon: ChartLine, href: "/u/progress" },
-  { name: "Profile Settings", icon: User2, href: "/u/profile" },
+  { name: "Profile & Settings", icon: UserCog2, href: "/u/profile" },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

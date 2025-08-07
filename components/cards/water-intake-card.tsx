@@ -8,13 +8,20 @@ import { useData } from "@/context/data-context";
 export function WaterIntakeCard({
   nutrition,
   stats,
+  litres,
   onTrack,
 }: {
   nutrition: NutritionDay;
   stats: any;
-  onTrack: (litres: number) => void;
+  litres?: number;
+  onTrack?: () => void;
 }) {
-  const {trackingEnabled } = useData();
+  const {track, settings } = useData();
+
+  const handleTrack = async () => {
+    await track('track', 'water', nutrition.id, 0, 0, 0, litres || 0.25)
+    if (onTrack) onTrack();
+  }
   return (
     <Card className="glas flex justify-center border-0 bg-transparent shadow-none">
       <CardHeader>
@@ -38,9 +45,9 @@ export function WaterIntakeCard({
           className="h-2 bg-blue-500/20"
           // indicatorClassName="bg-blue-500"
         />
-        {trackingEnabled ?
+        {settings.trackingEnabled ?
         <Button
-        onClick={() => onTrack(0.25)}
+        onClick={handleTrack}
         className="w-full bg-blue-600 hover:bg-blue-700 text-foreground"
         // disabled={stats.water_intake >= stats.target_water}
         >

@@ -18,7 +18,7 @@ export default function AuthLayout({
               <Dumbbell className="size-6" />
             </div>
           </div>
-          <h1 className="font-bold text-4xl tracking-tight">FitGH</h1>
+          <h1 className="font-bold text-4xl tracking-tight">FitPal</h1>
         </div>
         {children}
         <div className="text-muted-foreground text-center text-xs text-balance ">

@@ -19,7 +19,7 @@ export const handleApiError = (
     // The request was made and the server responded with a status code
     // that falls out of the range of 2xx
     const responseData = error.response.data;
-    console.error("API Error Response:", responseData); // Keep this for debugging
+    console.log("API Error Response:", responseData); // Keep this for debugging
 
     if (responseData && typeof responseData.detail === "string") {
       errorMessage = responseData.detail;
